@@ -12,7 +12,16 @@ TypeScript. Node with Express on the back end, grammY for the bot, React + Vite 
 for the Telegram Mini App. Postgres through Prisma, pg-boss for reminder jobs. pnpm, Docker
 Compose for local work, GitHub Actions for CI, Railway for hosting. One repository.
 
-Nothing is scaffolded yet. When you build a piece, add its commands to this file.
+## Commands
+
+- `pnpm install`: install workspace dependencies.
+- `pnpm lint`: lint all packages.
+- `pnpm typecheck`: check all packages.
+- `pnpm format`: format workspace configs and packages.
+- `pnpm format:check`: check formatting.
+- `docker compose up -d`: start local Postgres.
+
+When you build a piece, add its commands here.
 
 ## Working rules
 
@@ -40,7 +49,6 @@ the user asks for one, by its slash name or in plain words, read that file and f
 | `/pr`, "merge request", "open a PR" | `.agents/skills/pr.md` | Branch if needed, push, open a PR with a real description |
 | `/handoff`, "hand this to Codex/Claude" | `.agents/skills/handoff.md` | Leave the next agent what it needs, in `.agents/handoff.md` |
 | `/adr`, "document this" | `.agents/skills/adr.md` | Record what changed and why in `docs/decisions/` |
-| `/delegate`, "give this to Codex" | `.agents/skills/delegate.md` | Hand one task to Codex headless, review the diff, iterate |
 | `/delegate`, "give this to Codex" | `.agents/skills/delegate.md` | Hand one task to Codex headless, review the diff, iterate |
 
 ## House rules

@@ -1,0 +1,12 @@
+{
+  "name": "@nudge/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --project tsconfig.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  }
+}

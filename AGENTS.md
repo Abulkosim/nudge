@@ -40,9 +40,11 @@ the user asks for one, by its slash name or in plain words, read that file and f
 | `/pr`, "merge request", "open a PR" | `.agents/skills/pr.md` | Branch if needed, push, open a PR with a real description |
 | `/handoff`, "hand this to Codex/Claude" | `.agents/skills/handoff.md` | Leave the next agent what it needs, in `.agents/handoff.md` |
 | `/adr`, "document this" | `.agents/skills/adr.md` | Record what changed and why in `docs/decisions/` |
+| `/delegate`, "give this to Codex" | `.agents/skills/delegate.md` | Hand one task to Codex headless, review the diff, iterate |
 
 ## House rules
 
+- Be extremely concise. Sacrifice grammar for the sake of concision.
 - No em dashes anywhere in this project: code, comments, commits, docs, PR text, bot copy.
   Use a comma, a colon, or two sentences.
 - Git history, PR text and docs are written in a human voice. No AI attribution, no

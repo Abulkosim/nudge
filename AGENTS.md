@@ -41,6 +41,7 @@ the user asks for one, by its slash name or in plain words, read that file and f
 | `/handoff`, "hand this to Codex/Claude" | `.agents/skills/handoff.md` | Leave the next agent what it needs, in `.agents/handoff.md` |
 | `/adr`, "document this" | `.agents/skills/adr.md` | Record what changed and why in `docs/decisions/` |
 | `/delegate`, "give this to Codex" | `.agents/skills/delegate.md` | Hand one task to Codex headless, review the diff, iterate |
+| `/delegate`, "give this to Codex" | `.agents/skills/delegate.md` | Hand one task to Codex headless, review the diff, iterate |
 
 ## House rules
 

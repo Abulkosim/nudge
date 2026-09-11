@@ -7,10 +7,12 @@ received, all in chat) can start on a working skeleton. Five PR-sized steps, in 
 
 ## State
 
-Step 1 done, uncommitted on `main`: pnpm workspace with three package stubs, strict TS base,
-ESLint flat + Prettier, env example, Compose with Postgres 18. `pnpm lint`, `pnpm typecheck`,
-`pnpm format:check` and `docker compose config` pass. Built by Codex through `/delegate`,
-reviewed by Claude. Node 24, pnpm 11, Docker Compose 5 available locally.
+Steps 1 and 2 done. Step 1 is on `main`. Step 2 sits on branch `feat/server-bootstrap` with a
+PR open: one process running Express, the grammY bot and pg-boss, Prisma 7 schema with the
+first migration, config validation, graceful shutdown, Dockerfile, seven Vitest tests. Both
+steps were built by Codex through `/delegate` and reviewed by Claude. A root `.env` exists
+for local runs and is ignored by git. Polling with a real bot token is still unverified, no
+dev bot token has been supplied yet.
 
 ## Shape decided
 
@@ -38,7 +40,7 @@ current state before acting so a double tap is a no-op.
    gitignore, editorconfig, nvmrc, example env, Docker Compose with Postgres only. Three
    package stubs. `pnpm install`, `pnpm lint`, `pnpm typecheck` pass. Commands added to
    `AGENTS.md`.
-2. Server bootstrap: Express health route, config loader, logger, grammY `/start` in polling,
+2. Done. Server bootstrap: Express health route, config loader, logger, grammY `/start` in polling,
    Prisma with the first migration, pg-boss on the same database with one throwaway job to
    prove scheduling survives a restart. Graceful shutdown. Dockerfile whose start runs
    `prisma migrate deploy` first.

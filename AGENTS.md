@@ -19,7 +19,15 @@ Compose for local work, GitHub Actions for CI, Railway for hosting. One reposito
 - `pnpm typecheck`: check all packages.
 - `pnpm format`: format workspace configs and packages.
 - `pnpm format:check`: check formatting.
+- `pnpm dev`: start the server in watch mode with the root `.env`.
+- `pnpm build`: build the server.
+- `pnpm test`: run workspace tests.
+- `pnpm --filter @nudge/server db:migrate`: create and apply local migrations.
+- `pnpm --filter @nudge/server db:migrate:deploy`: apply committed migrations.
+- `pnpm --filter @nudge/server db:generate`: generate the Prisma client.
+- `pnpm --filter @nudge/server db:studio`: open Prisma Studio.
 - `docker compose up -d`: start local Postgres.
+- `docker build -t nudge-server .`: build the server image.
 
 When you build a piece, add its commands here.
 

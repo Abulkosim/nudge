@@ -12,7 +12,9 @@
     "format": "prettier --write '*.{json,yaml,yml,mjs}' && pnpm -r --if-present run format",
     "format:check": "prettier --check '*.{json,yaml,yml,mjs}' && pnpm -r --if-present run format:check",
     "typecheck": "pnpm -r --if-present run typecheck",
-    "test": "pnpm -r --if-present run test"
+    "test": "pnpm -r --if-present run test",
+    "dev": "pnpm --filter @nudge/server dev",
+    "build": "pnpm --filter @nudge/server build"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

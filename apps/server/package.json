@@ -16,7 +16,8 @@
     "db:migrate:deploy": "node --env-file-if-exists=../../.env node_modules/prisma/build/index.js migrate deploy",
     "db:generate": "prisma generate",
     "db:studio": "node --env-file=../../.env node_modules/prisma/build/index.js studio",
-    "predev": "pnpm db:generate"
+    "predev": "pnpm db:generate",
+    "dev:init-data": "tsx --env-file=../../.env src/auth/dev-init-data.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
@@ -26,7 +27,8 @@
     "pg-boss": "12.31.0",
     "pino": "10.3.1",
     "prisma": "7.10.0",
-    "zod": "4.6.1"
+    "zod": "4.6.2",
+    "@nudge/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/express": "5.0.6",

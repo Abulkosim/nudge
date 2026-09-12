@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Bot } from 'grammy';
 import { expect, it } from 'vitest';
+import { fakeUsers, silentLogger } from './test-helpers.js';
 import { createApp } from './app.js';
 import { parseConfig } from './config-schema.js';
 
@@ -34,6 +35,8 @@ it.each([
     const { app, miniappMounted } = createApp(
       { ...config, NODE_ENV: production ? 'production' : 'development' },
       new Bot(config.BOT_TOKEN),
+      fakeUsers(),
+      silentLogger,
       dist,
     );
     expect(miniappMounted).toBe(production && built);

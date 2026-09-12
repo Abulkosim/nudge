@@ -15,6 +15,7 @@ const schema = z
       .default('development'),
     DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
     BOT_TOKEN: z.string().trim().min(1),
+    AUTH_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(86400),
     BOT_MODE: z.enum(['polling', 'webhook']),
     WEBHOOK_URL: optionalUrl,
     WEBHOOK_SECRET: z.preprocess(

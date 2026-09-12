@@ -14,16 +14,18 @@ All five scaffolding steps are merged on `main`. Decisions:
 [CI and hosting](../docs/decisions/0005-ci-and-hosting.md).
 
 The dev bot polls, `/start` replies and upserts the user, and the smoke job fires against
-local Postgres. A simplification pass is in review as PR 6 on `chore/simplify`.
+local Postgres. The milestone 1 product decisions are settled in `PRD.md`.
 
 ## Next
 
-Plan the product flow. Settle the PRD blockers first: when and how timezone is confirmed,
-what happens without one, which snooze choices to offer, and whether ignored reminders repeat.
+Milestone 1 lands in four PRs, in order: capture and confirm without AI, including the
+timezone prompt; remind, receive and snooze on pg-boss; the AI parser behind an interface
+with the manual flow as fallback; the Mini App list. Railway setup runs in parallel.
 
 ## Watch out
 
 - The ignored root `.env` holds the dev bot token. Keep dev and production separate.
 - Railway, the production bot and the Mini App in a real Telegram client remain unverified.
   Follow [the deploy runbook](../docs/deploy.md) for setup.
-- Timezone stays nullable until the product decision is made.
+- `User.timezone` is nullable so `/start` can run before the prompt is answered. Scheduling
+  code must refuse a user without one.

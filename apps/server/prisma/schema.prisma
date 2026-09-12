@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ItemStatus {
+  draft
+  open
+  received
+  cancelled
+}
+
+enum ReminderStatus {
+  pending
+  sent
+  cancelled
+}
+
+model User {
+  id         String   @id @default(uuid())
+  telegramId BigInt   @unique
+  timezone   String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  items      Item[]
+}
+
+model Item {
+  id              String     @id @default(uuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id])
+  what            String
+  fromWhom        String?
+  expectedAt      DateTime?  @db.Timestamptz(3)
+  status          ItemStatus @default(draft)
+  sourceChatId    BigInt?
+  sourceMessageId BigInt?
+  sourceText      String?
+  createdAt       DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime   @updatedAt @db.Timestamptz(3)
+  receivedAt      DateTime?  @db.Timestamptz(3)
+  reminders       Reminder[]
+
+  @@index([userId, status])
+}
+
+model Reminder {
+  id           String         @id @default(uuid())
+  itemId       String
+  item         Item           @relation(fields: [itemId], references: [id])
+  scheduledFor DateTime       @db.Timestamptz(3)
+  jobId        String?
+  status       ReminderStatus @default(pending)
+  sentAt       DateTime?      @db.Timestamptz(3)
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([itemId, status])
+}

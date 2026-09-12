@@ -32,6 +32,7 @@ Compose for local work, GitHub Actions for CI, Railway for hosting. One reposito
 - `pnpm --filter @nudge/miniapp preview`: serve the built Mini App at `/app/`.
 - `docker compose up -d`: start local Postgres.
 - `docker build -t nudge-server .`: build the server image.
+- Pushing to `main` deploys to Railway once CI passes. Setup and variables: `docs/deploy.md`.
 
 When you build a piece, add its commands here.
 

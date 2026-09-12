@@ -1,9 +1,18 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src/**/*.ts"],
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
-  }
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    // Vitest, jest-dom and Vite declarations conflict; application code stays checked.
+    "skipLibCheck": true
+  },
+  "include": ["src", "vite.config.ts"]
 }

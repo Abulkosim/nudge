@@ -10,6 +10,15 @@ const env = {
   LOG_LEVEL: 'info',
 };
 describe('config', () => {
+  it('defaults NODE_ENV to development and validates explicit environments', () => {
+    expect(parseConfig(env).NODE_ENV).toBe('development');
+    for (const NODE_ENV of ['development', 'production', 'test']) {
+      expect(parseConfig({ ...env, NODE_ENV }).NODE_ENV).toBe(NODE_ENV);
+    }
+    expect(() => parseConfig({ ...env, NODE_ENV: 'invalid' })).toThrow(
+      'NODE_ENV',
+    );
+  });
   it('rejects a missing BOT_TOKEN', () => {
     const missing: NodeJS.ProcessEnv = { ...env };
     delete missing.BOT_TOKEN;

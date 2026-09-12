@@ -58,8 +58,12 @@ async function start() {
   checkpoint();
   await startSmokeWorker(boss, logger);
   checkpoint();
+  const { app, miniappMounted } = createApp(config, bot);
+  if (config.NODE_ENV === 'production' && !miniappMounted) {
+    logger.warn('Mini App build missing. /app is unavailable.');
+  }
   await new Promise<void>((resolve, reject) => {
-    server = createApp(config, bot).listen(config.PORT, '0.0.0.0', (error) =>
+    server = app.listen(config.PORT, '0.0.0.0', (error) =>
       error ? reject(error) : resolve(),
     );
     server.once('error', reject);

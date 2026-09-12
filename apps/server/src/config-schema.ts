@@ -10,6 +10,9 @@ const optionalUrl = z.preprocess(
 );
 const schema = z
   .object({
+    NODE_ENV: z
+      .enum(['development', 'production', 'test'])
+      .default('development'),
     DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
     BOT_TOKEN: z.string().trim().min(1),
     BOT_MODE: z.enum(['polling', 'webhook']),

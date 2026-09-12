@@ -6,7 +6,8 @@ import { PrismaClient } from './generated/prisma/client.js';
 import { config } from './config.js';
 import { logger } from './logger.js';
 import { createApp } from './app.js';
-import { registerStart } from './bot.js';
+import { registerStart, registerCapture } from './bot.js';
+import { createItemsService } from './items/index.js';
 import { createUsersService } from './users/index.js';
 import { startSmokeWorker } from './smoke.js';
 
@@ -20,6 +21,21 @@ const boss = new PgBoss(config.DATABASE_URL);
 const bot = new Bot(config.BOT_TOKEN, { client: { timeoutSeconds: 10 } });
 const users = createUsersService(prisma);
 registerStart(bot, users);
+registerCapture(bot, users, createItemsService(prisma));
+bot.catch(({ error }) => {
+  // Prisma validation errors echo query arguments, which can hold message text.
+  const detail =
+    error instanceof Error && !error.name.startsWith('PrismaClientValidation')
+      ? error.message
+      : undefined;
+  logger.error(
+    {
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+      message: detail,
+    },
+    'Bot update failed',
+  );
+});
 let server: Server | undefined;
 let polling: Promise<void> | undefined;
 let stopping = false;

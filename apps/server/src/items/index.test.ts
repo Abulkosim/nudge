@@ -28,7 +28,7 @@ it.skipIf(!process.env.DATABASE_URL)(
       await prisma.$disconnect();
       await prisma.$connect();
       expect(
-        (await createItemsService(prisma).findDraft(user.id))?.draftStep,
+        (await createItemsService(prisma).findDraft(user.id))?.awaiting,
       ).toBe('from_whom');
       await expect(
         prisma.item.create({ data: { userId: user.id, what: 'Duplicate' } }),
@@ -43,7 +43,7 @@ it.skipIf(!process.env.DATABASE_URL)(
       ).toBeNull();
       await service.updateDraft(draft.id, user.id, 'from_whom', {
         expectedOn: new Date('2026-09-19'),
-        draftStep: 'confirm',
+        awaiting: 'confirm',
       });
       const confirmed = await Promise.all([
         service.confirm(draft.id, user.id),
@@ -52,7 +52,7 @@ it.skipIf(!process.env.DATABASE_URL)(
       expect(confirmed.filter(Boolean)).toHaveLength(1);
       expect(confirmed.find(Boolean)?.item).toMatchObject({
         status: 'open',
-        draftStep: null,
+        awaiting: null,
       });
       const reminders = await prisma.reminder.findMany({
         where: { itemId: draft.id },
@@ -69,7 +69,7 @@ it.skipIf(!process.env.DATABASE_URL)(
         sourceMessageId: 2n,
       });
       await service.updateDraft(skipped.id, user.id, 'from_whom', {
-        draftStep: 'confirm',
+        awaiting: 'confirm',
       });
       expect((await service.confirm(skipped.id, user.id))?.reminder).toBeNull();
       const cancelled = await service.createDraft(user.id, {
@@ -84,7 +84,7 @@ it.skipIf(!process.env.DATABASE_URL)(
         sourceMessageId: 4n,
       });
       await service.updateDraft(noZone.id, user.id, 'from_whom', {
-        draftStep: 'confirm',
+        awaiting: 'confirm',
       });
       await prisma.user.update({
         where: { id: user.id },

@@ -1,5 +1,5 @@
 import { TZDate } from '@date-fns/tz';
-import { format } from 'date-fns';
+import { addDays, format } from 'date-fns';
 
 export const zones = [
   'Asia/Tashkent',
@@ -43,6 +43,21 @@ export function reminderInstant(date: Date, zone: string, now: Date): Date {
     zone,
   ).getTime();
   return new Date(morning > now.getTime() ? morning : now.getTime() + hour);
+}
+// 09:00 local a whole number of days after now, used by the repeat and the snooze choices.
+export function nextMorning(now: Date, zone: string, daysAhead: number): Date {
+  const day = addDays(new TZDate(now, zone), daysAhead);
+  return new Date(
+    new TZDate(
+      day.getFullYear(),
+      day.getMonth(),
+      day.getDate(),
+      9,
+      0,
+      0,
+      zone,
+    ).getTime(),
+  );
 }
 export function formatDate(date: Date): string {
   return format(new TZDate(date, 'UTC'), 'EEE d MMM yyyy');

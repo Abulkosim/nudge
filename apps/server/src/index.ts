@@ -9,7 +9,10 @@ import { createApp } from './app.js';
 import { registerStart, registerCapture } from './bot.js';
 import { createItemsService } from './items/index.js';
 import { createUsersService } from './users/index.js';
-import { startSmokeWorker } from './smoke.js';
+import { createRemindersService } from './reminders/index.js';
+import { createScheduler } from './reminders/scheduler.js';
+import { startReminderWorker } from './reminders/worker.js';
+import { registerReminders } from './reminders/callbacks.js';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
@@ -20,8 +23,17 @@ const prisma = new PrismaClient({
 const boss = new PgBoss(config.DATABASE_URL);
 const bot = new Bot(config.BOT_TOKEN, { client: { timeoutSeconds: 10 } });
 const users = createUsersService(prisma);
+const items = createItemsService(prisma);
+const reminders = createRemindersService(prisma);
+const scheduler = createScheduler(boss, reminders);
 registerStart(bot, users);
-registerCapture(bot, users, createItemsService(prisma));
+// Reminder callbacks first: capture answers every other callback and stops there.
+registerCapture(
+  bot,
+  users,
+  items,
+  registerReminders(bot, users, items, scheduler),
+);
 bot.catch(({ error }) => {
   // Prisma validation errors echo query arguments, which can hold message text.
   const detail =
@@ -71,7 +83,17 @@ async function start() {
   logger.info('Database connected');
   await boss.start();
   checkpoint();
-  await startSmokeWorker(boss, logger);
+  await startReminderWorker(boss, {
+    reminders,
+    scheduler,
+    sender: bot.api,
+    logger,
+  });
+  checkpoint();
+  logger.info(
+    { count: await scheduler.scheduleMissing() },
+    'Pending reminders queued',
+  );
   checkpoint();
   const { app, miniappMounted } = createApp(config, bot, users, logger);
   if (config.NODE_ENV === 'production' && !miniappMounted) {

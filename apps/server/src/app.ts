@@ -3,14 +3,19 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { webhookCallback, type Bot } from 'grammy';
+import { createApi, type ApiLogger } from './api.js';
+import type { UsersService } from './users/index.js';
 import type { Config } from './config-schema.js';
 
 export function createApp(
   config: Config,
   bot: Bot,
+  users: UsersService,
+  logger: ApiLogger,
   miniappDist = fileURLToPath(new URL('../../miniapp/dist/', import.meta.url)),
 ) {
   const app = express();
+  app.use('/api', createApi(config, users, logger));
   app.get('/health', (_req, res) => {
     res.json({ ok: true });
   });

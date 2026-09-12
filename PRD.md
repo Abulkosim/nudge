@@ -64,7 +64,7 @@ Use Portainer later as an optional learning exercise. It is not part of the init
 - Items and reminders must survive restarts and deployments.
 - Completing or snoozing an item must prevent obsolete reminders.
 - Repeated messages or button presses must not create duplicate actions.
-- Validate Telegram authentication and restrict access to each user's own items.
+- Validate Telegram authentication and restrict access to each user's own items. Mini App launch data expires after 24 hours by default, configurable on the server.
 - Configure database backups and basic error logging.
 - Keep development and production bots and databases separate.
 - Run automated checks before deployment.
@@ -84,5 +84,5 @@ These are unresolved and worth settling before the code assumes an answer.
 - When and how the timezone is confirmed, and what the bot does for a user who never sets one.
 - The snooze choices offered on a reminder, and whether a reminder repeats if it is ignored.
 - Whether a received item can be reopened, and what happens to an item whose expected date passes.
-- How much of an item the Mini App can edit, and how long its session lasts.
+- How much of an item the Mini App can edit.
 - Which AI provider is used first, and what the manual capture path looks like when parsing fails.

@@ -6,6 +6,8 @@ import { PrismaClient } from './generated/prisma/client.js';
 import { config } from './config.js';
 import { logger } from './logger.js';
 import { createApp } from './app.js';
+import { registerStart } from './bot.js';
+import { createUsersService } from './users/index.js';
 import { startSmokeWorker } from './smoke.js';
 
 const prisma = new PrismaClient({
@@ -16,11 +18,8 @@ const prisma = new PrismaClient({
 });
 const boss = new PgBoss(config.DATABASE_URL);
 const bot = new Bot(config.BOT_TOKEN, { client: { timeoutSeconds: 10 } });
-bot.command('start', (ctx) =>
-  ctx.reply(
-    'Nudge reminds you about things you are waiting for from other people.',
-  ),
-);
+const users = createUsersService(prisma);
+registerStart(bot, users);
 let server: Server | undefined;
 let polling: Promise<void> | undefined;
 let stopping = false;
@@ -58,7 +57,7 @@ async function start() {
   checkpoint();
   await startSmokeWorker(boss, logger);
   checkpoint();
-  const { app, miniappMounted } = createApp(config, bot);
+  const { app, miniappMounted } = createApp(config, bot, users, logger);
   if (config.NODE_ENV === 'production' && !miniappMounted) {
     logger.warn('Mini App build missing. /app is unavailable.');
   }

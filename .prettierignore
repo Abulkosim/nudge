@@ -1,0 +1,7 @@
+**/node_modules/
+**/dist/
+**/coverage/
+apps/server/src/generated/
+# Product intent and accepted decisions are outside this formatting pass.
+PRD.md
+docs/decisions/

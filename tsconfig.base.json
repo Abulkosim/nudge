@@ -9,6 +9,10 @@
     "exactOptionalPropertyTypes": true,
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    // Vitest, jest-dom and Vite declarations conflict; application code stays checked.
+    "skipLibCheck": true
   }
 }

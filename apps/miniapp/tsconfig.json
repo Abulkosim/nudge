@@ -8,11 +8,7 @@
     "types": ["vite/client", "node"],
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    // Vitest, jest-dom and Vite declarations conflict; application code stays checked.
-    "skipLibCheck": true
+    }
   },
   "include": ["src", "vite.config.ts"]
 }

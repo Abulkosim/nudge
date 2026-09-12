@@ -33,5 +33,3 @@ Scaffolding is on `main` and production runs on Railway in webhook mode, declare
   open draft. Use the `/timezone` buttons to change zones while a draft is open.
 - A bare weekday means the next occurrence including today. Dates without a year use the
   current year. Past dates are refused.
-- Prettier rewrites `pnpm-lock.yaml` on this branch until the ignore from PR 8 lands.
-  Frozen installs still pass on the formatted file.

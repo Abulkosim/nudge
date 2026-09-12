@@ -19,7 +19,8 @@ export default defineRailway(() => {
       numReplicas: 1,
       healthcheckPath: '/health',
       healthcheckTimeout: 120,
-      restartPolicyType: 'ON_FAILURE',
+      // Restart on failure is Railway's default and reads back as unset, so naming it here
+      // would show as drift on every plan. Only the retry count is ours.
       restartPolicyMaxRetries: 3,
     },
     env: {

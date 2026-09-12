@@ -7,14 +7,14 @@ RUN corepack enable && corepack prepare pnpm@11.21.0 --activate
 WORKDIR /app
 
 FROM base AS build
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/server/package.json apps/server/package.json
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps/server/package.json apps/server/prisma.config.ts apps/server/
+COPY apps/server/prisma apps/server/prisma
 COPY apps/miniapp/package.json apps/miniapp/package.json
 COPY packages/shared packages/shared
-COPY tsconfig.base.json ./
+# Install runs prisma generate, so the schema has to be present before the sources are.
 RUN pnpm install --frozen-lockfile
-COPY apps/server apps/server
-COPY apps/miniapp apps/miniapp
+COPY apps apps
 RUN pnpm build
 
 FROM base AS production-deps

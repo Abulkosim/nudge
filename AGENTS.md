@@ -15,23 +15,14 @@ Compose for local work, GitHub Actions for CI, Railway for hosting. One reposito
 ## Commands
 
 - `pnpm install`: install workspace dependencies.
-- `pnpm lint`: lint all packages.
-- `pnpm typecheck`: check all packages.
-- `pnpm format`: format workspace configs and packages.
-- `pnpm format:check`: check formatting.
 - `pnpm dev`: start the server and Mini App in watch mode.
-- `pnpm build`: build shared, the server and the Mini App.
-- `pnpm --filter @nudge/shared build`: rebuild shared after editing it, the apps read its `dist`.
 - `pnpm test`: run workspace tests.
+- `pnpm lint`: lint the repo.
+- `pnpm typecheck`: check all packages.
+- `pnpm build`: build shared, the server and the Mini App.
 - `pnpm --filter @nudge/server db:migrate`: create and apply local migrations.
-- `pnpm --filter @nudge/server db:migrate:deploy`: apply committed migrations.
-- `pnpm --filter @nudge/server db:generate`: generate the Prisma client.
 - `pnpm --filter @nudge/server dev:init-data <telegram-id>`: sign local Telegram auth and print a curl command.
-- `pnpm --filter @nudge/server db:studio`: open Prisma Studio.
-- `pnpm --filter @nudge/miniapp dev`: start the Mini App with browser fallback.
-- `pnpm --filter @nudge/miniapp preview`: serve the built Mini App at `/app/`.
 - `docker compose up -d`: start local Postgres.
-- `docker build -t nudge-server .`: build the server image.
 - Pushing to `main` deploys to Railway once CI passes. Setup and variables: `docs/deploy.md`.
 
 When you build a piece, add its commands here.
@@ -53,16 +44,18 @@ When you build a piece, add its commands here.
 
 ## Skills
 
-Skills live in `.agents/skills/`. They are plain markdown with no tool-specific syntax. When
-the user asks for one, by its slash name or in plain words, read that file and follow it.
+Skills live in `.agents/skills/<name>/SKILL.md`, one folder per skill, plain markdown with a
+short frontmatter that both Codex and Claude Code discover. `.claude/skills` is a symlink to
+the same folder. When the user asks for one, by its slash name or in plain words, read that
+file and follow it.
 
-| Trigger | File | What it does |
-| --- | --- | --- |
-| `/commit`, "commit this" | `.agents/skills/commit.md` | Group the working tree into clean commits, push after each |
-| `/pr`, "merge request", "open a PR" | `.agents/skills/pr.md` | Branch if needed, push, open a PR with a real description |
-| `/handoff`, "hand this to Codex/Claude" | `.agents/skills/handoff.md` | Leave the next agent what it needs, in `.agents/handoff.md` |
-| `/adr`, "document this" | `.agents/skills/adr.md` | Record what changed and why in `docs/decisions/` |
-| `/delegate`, "give this to Codex" | `.agents/skills/delegate.md` | Hand one task to Codex headless, review the diff, iterate |
+| Trigger                                 | File                               | What it does                                                |
+| --------------------------------------- | ---------------------------------- | ----------------------------------------------------------- |
+| `/commit`, "commit this"                | `.agents/skills/commit/SKILL.md`   | Group the working tree into clean commits, push after each  |
+| `/pr`, "merge request", "open a PR"     | `.agents/skills/pr/SKILL.md`       | Branch if needed, push, open a PR with a real description   |
+| `/handoff`, "hand this to Codex/Claude" | `.agents/skills/handoff/SKILL.md`  | Leave the next agent what it needs, in `.agents/handoff.md` |
+| `/adr`, "document this"                 | `.agents/skills/adr/SKILL.md`      | Record what changed and why in `docs/decisions/`            |
+| `/delegate`, "give this to Codex"       | `.agents/skills/delegate/SKILL.md` | Hand one task to Codex headless, review the diff, iterate   |
 
 ## House rules
 

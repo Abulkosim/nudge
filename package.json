@@ -7,10 +7,10 @@
     "node": ">=24"
   },
   "scripts": {
-    "lint": "pnpm -r --if-present run lint",
-    "lint:fix": "pnpm -r --if-present run lint:fix",
-    "format": "prettier --write '*.{json,yaml,yml,mjs}' && pnpm -r --if-present run format",
-    "format:check": "prettier --check '*.{json,yaml,yml,mjs}' && pnpm -r --if-present run format:check",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "pnpm -r --if-present run test",
     "dev": "pnpm --parallel --filter @nudge/server --filter @nudge/miniapp run dev",
@@ -22,6 +22,8 @@
     "eslint-config-prettier": "10.1.8",
     "prettier": "3.9.6",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.70.0"
+    "typescript-eslint": "8.70.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.6"
   }
 }

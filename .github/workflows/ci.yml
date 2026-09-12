@@ -1,0 +1,68 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Protects main from code that does not lint, typecheck, migrate, test or build.
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://nudge:nudge@localhost:5432/nudge
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: nudge
+          POSTGRES_PASSWORD: nudge
+          POSTGRES_DB: nudge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nudge -d nudge"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - name: Validate the Prisma schema
+        run: pnpm --filter @nudge/server exec prisma validate
+      - name: Apply migrations
+        run: pnpm --filter @nudge/server db:migrate:deploy
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm format:check
+
+  # Proves the image Railway deploys still builds.
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

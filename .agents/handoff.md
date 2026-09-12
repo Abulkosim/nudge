@@ -7,14 +7,14 @@ received, all in chat) can start on a working skeleton. Five PR-sized steps, in 
 
 ## State
 
-Steps 1 to 4 done. Steps 1 to 3 are on `main`. Step 4 is on branch `feat/auth-shared-contract`
-with a PR open: initData verification, users upsert shared by bot and API, `/api/me`, one
-error shape, `packages/shared` as a compiled workspace package consumed by both apps, Mini
-App sign-in state, and a dev script that signs local initData. Built by Codex from a brief
-pasted into its own session, fixes and review by Claude. A root `.env` exists for local runs
-and is ignored by git, with a real dev bot token in it. Verified live on 2026-09-12: the bot
-polls, `/start` replies and upserts the user, the smoke job fires against Postgres. Still
-unverified: the Mini App shell inside a real Telegram client, which needs a public URL.
+Steps 1 to 5 done. Steps 1 to 4 are on `main`. Step 5 is on branch `feat/ci-and-hosting` with
+a PR open: GitHub Actions running the full suite against a Postgres 18 service container plus
+a Docker image build, `railway.json` as deploy config, and `docs/deploy.md` as the one-time
+production runbook. Branch protection on `main` requires those checks. Built by an Opus
+subagent from Claude's brief, reviewed by Claude. Live so far: the dev bot polls, `/start`
+replies and upserts the user, the smoke job fires against Postgres. Not yet done by anyone:
+the Railway project itself, the production bot, and the Mini App inside a real Telegram
+client. `docs/deploy.md` is the list of those steps.
 
 ## Shape decided
 
@@ -51,7 +51,7 @@ current state before acting so a double tap is a no-op.
    build in prod.
 4. Done. Auth and shared contract: initData HMAC verification middleware, request-scoped user,
    first zod schemas in `packages/shared`. Every API route scoped to the verified user.
-5. CI and hosting: GitHub Actions running install, lint, typecheck, test, Prisma validate and
+5. Done. CI and hosting: GitHub Actions running install, lint, typecheck, test, Prisma validate and
    both builds on PRs. Railway from `main`, separate dev and prod bots and databases. Second
    decision record for the single-process shape.
 

@@ -10,9 +10,9 @@ FROM base AS build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/server/package.json apps/server/package.json
 COPY apps/miniapp/package.json apps/miniapp/package.json
-COPY packages/shared/package.json packages/shared/package.json
-RUN pnpm install --frozen-lockfile
+COPY packages/shared packages/shared
 COPY tsconfig.base.json ./
+RUN pnpm install --frozen-lockfile
 COPY apps/server apps/server
 COPY apps/miniapp apps/miniapp
 RUN pnpm build
@@ -22,11 +22,12 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/server/package.json apps/server/package.json
 COPY apps/miniapp/package.json apps/miniapp/package.json
 COPY packages/shared/package.json packages/shared/package.json
-RUN pnpm --filter @nudge/server... install --prod --frozen-lockfile
+RUN pnpm --filter @nudge/server... install --prod --frozen-lockfile --ignore-scripts
 
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=production-deps --chown=node:node /app /app
+COPY --from=build --chown=node:node /app/packages/shared/dist packages/shared/dist
 COPY --from=build --chown=node:node /app/apps/server/dist apps/server/dist
 COPY --from=build --chown=node:node /app/apps/miniapp/dist apps/miniapp/dist
 COPY --from=build --chown=node:node /app/apps/server/prisma apps/server/prisma

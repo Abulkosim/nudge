@@ -14,7 +14,7 @@
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "pnpm -r --if-present run test",
     "dev": "pnpm --parallel --filter @nudge/server --filter @nudge/miniapp run dev",
-    "build": "pnpm --filter @nudge/server --filter @nudge/miniapp run build"
+    "build": "pnpm -r --if-present run build"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

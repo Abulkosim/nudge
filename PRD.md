@@ -77,12 +77,20 @@ Deliver the complete capture, confirmation, reminder, and received flow in Teleg
 
 Success means the user can record a real expectation quickly, trust the reminder to arrive, and resolve it with one tap.
 
-## Open questions
+## Product decisions
 
-These are unresolved and worth settling before the code assumes an answer.
+Settled on 2026-09-12 so the code can assume them. Change here first, then in the code.
 
-- When and how the timezone is confirmed, and what the bot does for a user who never sets one.
-- The snooze choices offered on a reminder, and whether a reminder repeats if it is ignored.
-- Whether a received item can be reopened, and what happens to an item whose expected date passes.
-- How much of an item the Mini App can edit.
-- Which AI provider is used first, and what the manual capture path looks like when parsing fails.
+- Timezone: asked once at `/start` with buttons for Asia/Tashkent and a few common zones, or the
+  user types a city. No reminder is scheduled until a timezone is confirmed. The Mini App
+  detects the device timezone and offers a one tap fix.
+- Default reminder time: 09:00 local on the expected date. Once the expected date passes the
+  item shows as overdue in the list. Nothing else fires.
+- Snooze choices: in 1 hour, tomorrow 09:00, in 3 days, pick a date. A reminder nobody acts on
+  repeats once, the next morning at 09:00 local, then stops. The item stays open.
+- A received item can be reopened, from the Mini App only.
+- The Mini App edits what, from whom, expected date, reminder time and status. The source
+  message is read only.
+- AI: Claude Haiku 4.5 first, behind a small parser interface, swappable by environment
+  variable. When parsing fails or no provider is configured the bot asks for what, from whom
+  and when in turn.

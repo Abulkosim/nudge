@@ -7,14 +7,13 @@ received, all in chat) can start on a working skeleton. Five PR-sized steps, in 
 
 ## State
 
-Steps 1 to 3 done. Step 1 is on `main`. Step 2 is PR 1 on `feat/server-bootstrap`, unreviewed.
-Step 3 is PR 2 on `feat/miniapp-bootstrap`, stacked on PR 1 and targeting it, so it retargets
-to `main` when PR 1 merges. Step 3 adds the Mini App shell: React 19, Vite, Tailwind v4,
-shadcn/ui, one Telegram SDK adapter with a browser mock, theme mapping, API client, and the
-server serving the build at `/app` in production. `NODE_ENV` is now part of config. All
-steps were built by Codex through `/delegate` and reviewed by Claude. A root `.env` exists
-for local runs and is ignored by git. Nothing has been rendered inside a real Telegram
-client yet, and polling with a real bot token is unverified.
+Steps 1 to 3 are merged to `main` (PRs 1 to 3) and every check passes there: lint, typecheck,
+21 tests, both builds, format check, Docker image. The server boots against Postgres, the
+Mini App shell is served at `/app` in production, `NODE_ENV` is part of validated config.
+All steps were built by Codex through `/delegate` and reviewed by Claude. A root `.env`
+exists for local runs and is ignored by git. Still unverified: the shell inside a real
+Telegram client, and polling with a real bot token. Both need a dev bot token and a public
+URL.
 
 ## Shape decided
 

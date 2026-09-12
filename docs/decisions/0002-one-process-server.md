@@ -1,7 +1,7 @@
 # 0002. One process for the API, the bot and the reminder worker
 
 - Date: 2026-09-11
-- PR: feat/server-bootstrap
+- PR: https://github.com/Abulkosim/nudge/pull/1
 - Status: accepted
 
 ## Context

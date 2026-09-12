@@ -1,7 +1,7 @@
 # 0003. Mini App shell: one SDK boundary, served by the server
 
 - Date: 2026-09-12
-- PR: feat/miniapp-bootstrap
+- PR: https://github.com/Abulkosim/nudge/pull/2
 - Status: accepted
 
 ## Context

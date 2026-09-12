@@ -13,7 +13,7 @@ it('round-trips scalar DTOs through JSON', () => {
     userId: user.id,
     what: 'Approval',
     fromWhom: null,
-    expectedAt: null,
+    expectedOn: null,
     status: 'open',
     sourceChatId: '-1001234567890',
     sourceMessageId: '123',
@@ -38,7 +38,7 @@ it('round-trips scalar DTOs through JSON', () => {
     ApiError.safeParse({ error: { code: 'unknown', message: 'No.' } }).success,
   ).toBe(false);
   expect(UserDto.safeParse({ ...user, telegramId: 123 }).success).toBe(false);
-  expect(ItemDto.safeParse({ ...item, expectedAt: 'tomorrow' }).success).toBe(
+  expect(ItemDto.safeParse({ ...item, expectedOn: 'tomorrow' }).success).toBe(
     false,
   );
 });

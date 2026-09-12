@@ -20,7 +20,7 @@ export const ItemDto = z.object({
   userId: z.uuid(),
   what: z.string(),
   fromWhom: z.string().nullable(),
-  expectedAt: timestamp.nullable(),
+  expectedOn: z.iso.date().nullable(),
   status: ItemStatus,
   sourceChatId: integerString.nullable(),
   sourceMessageId: integerString.nullable(),

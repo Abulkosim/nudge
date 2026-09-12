@@ -7,12 +7,14 @@ received, all in chat) can start on a working skeleton. Five PR-sized steps, in 
 
 ## State
 
-Steps 1 and 2 done. Step 1 is on `main`. Step 2 sits on branch `feat/server-bootstrap` with a
-PR open: one process running Express, the grammY bot and pg-boss, Prisma 7 schema with the
-first migration, config validation, graceful shutdown, Dockerfile, seven Vitest tests. Both
+Steps 1 to 3 done. Step 1 is on `main`. Step 2 is PR 1 on `feat/server-bootstrap`, unreviewed.
+Step 3 is PR 2 on `feat/miniapp-bootstrap`, stacked on PR 1 and targeting it, so it retargets
+to `main` when PR 1 merges. Step 3 adds the Mini App shell: React 19, Vite, Tailwind v4,
+shadcn/ui, one Telegram SDK adapter with a browser mock, theme mapping, API client, and the
+server serving the build at `/app` in production. `NODE_ENV` is now part of config. All
 steps were built by Codex through `/delegate` and reviewed by Claude. A root `.env` exists
-for local runs and is ignored by git. Polling with a real bot token is still unverified, no
-dev bot token has been supplied yet.
+for local runs and is ignored by git. Nothing has been rendered inside a real Telegram
+client yet, and polling with a real bot token is unverified.
 
 ## Shape decided
 
@@ -44,7 +46,7 @@ current state before acting so a double tap is a no-op.
    Prisma with the first migration, pg-boss on the same database with one throwaway job to
    prove scheduling survives a restart. Graceful shutdown. Dockerfile whose start runs
    `prisma migrate deploy` first.
-3. Mini App bootstrap: Vite React TS, Tailwind and shadcn/ui, Telegram WebApp SDK wired so
+3. Done. Mini App bootstrap: Vite React TS, Tailwind and shadcn/ui, Telegram WebApp SDK wired so
    theme follows Telegram light and dark params, one placeholder screen. Server serves the
    build in prod.
 4. Auth and shared contract: initData HMAC verification middleware, request-scoped user,

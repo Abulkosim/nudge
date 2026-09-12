@@ -29,19 +29,19 @@ Railway injects `PORT` and expects the server to listen on it, so leave `PORT` u
 
 Set these on the server service, under `Variables`.
 
-| Key | Production value |
-| --- | --- |
-| `DATABASE_URL` | `${{ Postgres.DATABASE_URL }}`, referencing the Postgres service in this project |
-| `BOT_TOKEN` | A second bot from BotFather, separate from the dev bot |
-| `AUTH_MAX_AGE_SECONDS` | Leave unset, the default of 86400 applies |
-| `BOT_MODE` | `webhook` |
-| `WEBHOOK_URL` | `https://<railway domain>/telegram/webhook` |
-| `WEBHOOK_SECRET` | The output of `openssl rand -hex 32` |
-| `PORT` | Leave unset, Railway injects it |
-| `MINIAPP_URL` | `https://<railway domain>/app/` |
-| `AI_PROVIDER` | `none` for now |
-| `ANTHROPIC_API_KEY` | Leave unset while `AI_PROVIDER` is `none` |
-| `LOG_LEVEL` | `info` |
+| Key                    | Production value                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| `DATABASE_URL`         | `${{ Postgres.DATABASE_URL }}`, referencing the Postgres service in this project |
+| `BOT_TOKEN`            | A second bot from BotFather, separate from the dev bot                           |
+| `AUTH_MAX_AGE_SECONDS` | Leave unset, the default of 86400 applies                                        |
+| `BOT_MODE`             | `webhook`                                                                        |
+| `WEBHOOK_URL`          | `https://<railway domain>/telegram/webhook`                                      |
+| `WEBHOOK_SECRET`       | The output of `openssl rand -hex 32`                                             |
+| `PORT`                 | Leave unset, Railway injects it                                                  |
+| `MINIAPP_URL`          | `https://<railway domain>/app/`                                                  |
+| `AI_PROVIDER`          | `none` for now                                                                   |
+| `ANTHROPIC_API_KEY`    | Leave unset while `AI_PROVIDER` is `none`                                        |
+| `LOG_LEVEL`            | `info`                                                                           |
 
 `NODE_ENV` is set to `production` by the image, do not add it.
 

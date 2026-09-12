@@ -1,63 +1,29 @@
-# Handoff, 2026-09-11, from Claude
+# Handoff
 
 ## Goal
 
-Scaffold the repo for the stack in `AGENTS.md` so milestone 1 (capture, confirm, remind,
-received, all in chat) can start on a working skeleton. Five PR-sized steps, in order.
+Build milestone 1: capture, confirm, remind and mark received, all in chat.
 
 ## State
 
-Steps 1 to 5 done. Steps 1 to 4 are on `main`. Step 5 is on branch `feat/ci-and-hosting` with
-a PR open: GitHub Actions running the full suite against a Postgres 18 service container plus
-a Docker image build, `railway.json` as deploy config, and `docs/deploy.md` as the one-time
-production runbook. Branch protection on `main` requires those checks. Built by an Opus
-subagent from Claude's brief, reviewed by Claude. Live so far: the dev bot polls, `/start`
-replies and upserts the user, the smoke job fires against Postgres. Not yet done by anyone:
-the Railway project itself, the production bot, and the Mini App inside a real Telegram
-client. `docs/deploy.md` is the list of those steps.
+All five scaffolding steps are merged on `main`. Decisions:
+[stack](../docs/decisions/0001-stack-and-repo-shape.md),
+[server](../docs/decisions/0002-one-process-server.md),
+[Mini App](../docs/decisions/0003-miniapp-shell.md),
+[auth](../docs/decisions/0004-telegram-auth-and-shared-contract.md),
+[CI and hosting](../docs/decisions/0005-ci-and-hosting.md).
 
-## Shape decided
-
-One pnpm workspace, three packages.
-
-- `apps/server`: Express, grammY bot, pg-boss worker and Prisma in one Node process. Serves
-  the built Mini App in prod. One Railway service plus one Postgres.
-- `apps/miniapp`: React + Vite + shadcn/ui. Vite proxies to the server in dev.
-- `packages/shared`: zod schemas for the item model and API contract, used by both.
-
-Defaults: bot polls in dev and uses a webhook in prod, switched by env. Config loaded once
-through zod, process refuses to start on a missing key. AI behind an interface with a `none`
-provider as default. TypeScript strict, tsx for dev, ESLint flat + Prettier, Vitest, pino.
-Node pinned with `.nvmrc` and `packageManager`.
-
-Data model for the first migration: User (telegram id, nullable timezone). Item (what, from
-whom, expected date, status draft/open/received/cancelled, source chat and message id,
-source text). Reminder (item id, scheduled time, pg-boss job id, status pending/sent/
-cancelled). Reminder jobs use a pg-boss singleton key per reminder. Callback handlers check
-current state before acting so a double tap is a no-op.
+The dev bot polls, `/start` replies and upserts the user, and the smoke job fires against
+local Postgres. A simplification pass is in review as PR 6 on `chore/simplify`.
 
 ## Next
 
-1. Done. Workspace skeleton: workspace file, root scripts, base tsconfig, lint and format config,
-   gitignore, editorconfig, nvmrc, example env, Docker Compose with Postgres only. Three
-   package stubs. `pnpm install`, `pnpm lint`, `pnpm typecheck` pass. Commands added to
-   `AGENTS.md`.
-2. Done. Server bootstrap: Express health route, config loader, logger, grammY `/start` in polling,
-   Prisma with the first migration, pg-boss on the same database with one throwaway job to
-   prove scheduling survives a restart. Graceful shutdown. Dockerfile whose start runs
-   `prisma migrate deploy` first.
-3. Done. Mini App bootstrap: Vite React TS, Tailwind and shadcn/ui, Telegram WebApp SDK wired so
-   theme follows Telegram light and dark params, one placeholder screen. Server serves the
-   build in prod.
-4. Done. Auth and shared contract: initData HMAC verification middleware, request-scoped user,
-   first zod schemas in `packages/shared`. Every API route scoped to the verified user.
-5. Done. CI and hosting: GitHub Actions running install, lint, typecheck, test, Prisma validate and
-   both builds on PRs. Railway from `main`, separate dev and prod bots and databases. Second
-   decision record for the single-process shape.
+Plan the product flow. Settle the PRD blockers first: when and how timezone is confirmed,
+what happens without one, which snooze choices to offer, and whether ignored reminders repeat.
 
 ## Watch out
 
-- Check current docs, not memory, for pg-boss v10 `send` with `startAfter` and
-  `singletonKey`, and for Telegram initData validation.
-- Timezone stays nullable, the PRD has not settled when it is confirmed.
-- House rules in `AGENTS.md`: no em dashes, no AI attribution, no scope creep.
+- The ignored root `.env` holds the dev bot token. Keep dev and production separate.
+- Railway, the production bot and the Mini App in a real Telegram client remain unverified.
+  Follow [the deploy runbook](../docs/deploy.md) for setup.
+- Timezone stays nullable until the product decision is made.

@@ -7,13 +7,14 @@ received, all in chat) can start on a working skeleton. Five PR-sized steps, in 
 
 ## State
 
-Steps 1 to 3 are merged to `main` (PRs 1 to 3) and every check passes there: lint, typecheck,
-21 tests, both builds, format check, Docker image. The server boots against Postgres, the
-Mini App shell is served at `/app` in production, `NODE_ENV` is part of validated config.
-All steps were built by Codex through `/delegate` and reviewed by Claude. A root `.env`
-exists for local runs and is ignored by git. Still unverified: the shell inside a real
-Telegram client, and polling with a real bot token. Both need a dev bot token and a public
-URL.
+Steps 1 to 4 done. Steps 1 to 3 are on `main`. Step 4 is on branch `feat/auth-shared-contract`
+with a PR open: initData verification, users upsert shared by bot and API, `/api/me`, one
+error shape, `packages/shared` as a compiled workspace package consumed by both apps, Mini
+App sign-in state, and a dev script that signs local initData. Built by Codex from a brief
+pasted into its own session, fixes and review by Claude. A root `.env` exists for local runs
+and is ignored by git. Still unverified: the shell inside a real Telegram client, and polling
+with a real bot token. `pnpm dev` exits on the dummy token, so end to end runs need a dev bot
+token.
 
 ## Shape decided
 
@@ -48,7 +49,7 @@ current state before acting so a double tap is a no-op.
 3. Done. Mini App bootstrap: Vite React TS, Tailwind and shadcn/ui, Telegram WebApp SDK wired so
    theme follows Telegram light and dark params, one placeholder screen. Server serves the
    build in prod.
-4. Auth and shared contract: initData HMAC verification middleware, request-scoped user,
+4. Done. Auth and shared contract: initData HMAC verification middleware, request-scoped user,
    first zod schemas in `packages/shared`. Every API route scoped to the verified user.
 5. CI and hosting: GitHub Actions running install, lint, typecheck, test, Prisma validate and
    both builds on PRs. Railway from `main`, separate dev and prod bots and databases. Second

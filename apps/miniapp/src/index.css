@@ -1,0 +1,74 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    min-width: 280px;
+  }
+}
+
+.app-frame {
+  min-height: 100svh;
+  padding-top: calc(
+    1.5rem + max(env(safe-area-inset-top, 0px), var(--safe-top, 0px)) +
+      var(--content-safe-top, 0px)
+  );
+  padding-right: calc(
+    1.5rem + max(env(safe-area-inset-right, 0px), var(--safe-right, 0px)) +
+      var(--content-safe-right, 0px)
+  );
+  padding-bottom: calc(
+    1.5rem + max(env(safe-area-inset-bottom, 0px), var(--safe-bottom, 0px)) +
+      var(--content-safe-bottom, 0px)
+  );
+  padding-left: calc(
+    1.5rem + max(env(safe-area-inset-left, 0px), var(--safe-left, 0px)) +
+      var(--content-safe-left, 0px)
+  );
+}

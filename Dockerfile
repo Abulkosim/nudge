@@ -14,19 +14,21 @@ COPY packages/shared/package.json packages/shared/package.json
 RUN pnpm install --frozen-lockfile
 COPY tsconfig.base.json ./
 COPY apps/server apps/server
-RUN pnpm --filter @nudge/server build
+COPY apps/miniapp apps/miniapp
+RUN pnpm build
 
 FROM base AS production-deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/server/package.json apps/server/package.json
 COPY apps/miniapp/package.json apps/miniapp/package.json
 COPY packages/shared/package.json packages/shared/package.json
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm --filter @nudge/server... install --prod --frozen-lockfile
 
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=production-deps --chown=node:node /app /app
 COPY --from=build --chown=node:node /app/apps/server/dist apps/server/dist
+COPY --from=build --chown=node:node /app/apps/miniapp/dist apps/miniapp/dist
 COPY --from=build --chown=node:node /app/apps/server/prisma apps/server/prisma
 COPY --from=build --chown=node:node /app/apps/server/prisma.config.ts apps/server/prisma.config.ts
 USER node

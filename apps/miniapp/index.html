@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <title>Nudge</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        background: var(--background, light-dark(#ffffff, #17212b));
+        color: var(--foreground, light-dark(#222222, #f5f5f5));
+      }
+    </style>
+    <script>
+      // Paint the launch background before the application bundle loads.
+      try {
+        const hash = new URLSearchParams(location.hash.slice(1));
+        const query = new URLSearchParams(location.search);
+        const theme = JSON.parse(
+          hash.get('tgWebAppThemeParams') ||
+            query.get('tgWebAppThemeParams') ||
+            '{}',
+        );
+        if (theme && typeof theme === 'object') {
+          const root = document.documentElement;
+          if (/^#[\da-f]{6}$/i.test(theme.bg_color))
+            root.style.backgroundColor = theme.bg_color;
+          if (/^#[\da-f]{6}$/i.test(theme.text_color))
+            root.style.color = theme.text_color;
+        }
+      } catch {
+        // Malformed launch data is handled by the adapter after startup.
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

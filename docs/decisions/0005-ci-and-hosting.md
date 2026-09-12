@@ -2,7 +2,7 @@
 
 - Date: 2026-09-12
 - PR: feat/ci-and-hosting
-- Status: accepted
+- Status: accepted, the Railway configuration part is superseded by 0006
 
 ## Context
 

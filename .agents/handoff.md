@@ -20,12 +20,13 @@ local Postgres. The milestone 1 product decisions are settled in `PRD.md`.
 
 Milestone 1 lands in four PRs, in order: capture and confirm without AI, including the
 timezone prompt; remind, receive and snooze on pg-boss; the AI parser behind an interface
-with the manual flow as fallback; the Mini App list. Railway setup runs in parallel.
+with the manual flow as fallback; the Mini App list. Railway is done.
 
 ## Watch out
 
 - The ignored root `.env` holds the dev bot token. Keep dev and production separate.
-- Railway, the production bot and the Mini App in a real Telegram client remain unverified.
-  Follow [the deploy runbook](../docs/deploy.md) for setup.
+- Production runs on Railway and is verified: webhook mode, migrations, `/health`, the Mini
+  App from the menu button. `.railway/railway.ts` is the source of truth for its settings,
+  see [the deploy runbook](../docs/deploy.md).
 - `User.timezone` is nullable so `/start` can run before the prompt is answered. Scheduling
   code must refuse a user without one.

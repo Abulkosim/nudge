@@ -10,7 +10,10 @@ export const testUser = {
 };
 export const silentLogger = { warn: () => {}, error: () => {} };
 export function fakeUsers(): UsersService {
-  return { findOrCreateByTelegramId: async () => testUser };
+  return {
+    findOrCreateByTelegramId: async () => testUser,
+    setTimezone: async (_id, timezone) => ({ ...testUser, timezone }),
+  };
 }
 
 // Independent signing implementation: object keys, not verifier/query parser helpers.

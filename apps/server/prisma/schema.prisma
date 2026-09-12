@@ -16,6 +16,15 @@ enum ItemStatus {
   cancelled
 }
 
+enum DraftStep {
+  from_whom
+  expected_on
+  confirm
+  edit_what
+  edit_from_whom
+  edit_expected_on
+}
+
 enum ReminderStatus {
   pending
   sent
@@ -36,7 +45,8 @@ model Item {
   user            User       @relation(fields: [userId], references: [id])
   what            String
   fromWhom        String?
-  expectedAt      DateTime?  @db.Timestamptz(3)
+  expectedOn      DateTime?  @db.Date
+  draftStep       DraftStep?
   status          ItemStatus @default(draft)
   sourceChatId    BigInt?
   sourceMessageId BigInt?

@@ -1,10 +1,19 @@
 import { InlineKeyboard, type Bot, type Context } from 'grammy';
-import type { Item, User } from '../generated/prisma/client.js';
+import type { Item, Reminder, User } from '../generated/prisma/client.js';
 import type { UsersService } from '../users/index.js';
 import type { ItemsService } from '../items/index.js';
 import { parseDate } from '../time/parse-date.js';
 import { resolveTimezone, zones } from '../time/timezone.js';
 import { card, copy } from './copy.js';
+
+// What capture needs from the reminder flow: the job for a confirmed item, and the snooze
+// question that owns a plain text answer before any draft does.
+export interface CaptureReminders {
+  enqueue(reminder: Reminder): Promise<string | null>;
+  question(userId: string): Promise<Item | null>;
+  answer(ctx: Context, item: Item, user: User, text: string): Promise<void>;
+  clearQuestion(userId: string): Promise<boolean>;
+}
 
 export function timezoneKeyboard(userId: string) {
   const keyboard = new InlineKeyboard();
@@ -29,20 +38,21 @@ export function registerCapture(
   bot: Bot,
   users: UsersService,
   items: ItemsService,
+  reminders: CaptureReminders,
   now = () => new Date(),
 ) {
   async function prompt(ctx: Context, item: Item, user: User) {
     if (item.status !== 'draft') return;
-    if (item.draftStep === 'from_whom' || item.draftStep === 'edit_from_whom') {
+    if (item.awaiting === 'from_whom' || item.awaiting === 'edit_from_whom') {
       await ctx.reply(copy.from, {
         reply_markup: new InlineKeyboard().text(copy.skip, `fs:${item.id}`),
       });
-    } else if (item.draftStep === 'edit_what') await ctx.reply(copy.what);
+    } else if (item.awaiting === 'edit_what') await ctx.reply(copy.what);
     else if (!user.timezone)
       await ctx.reply(copy.timezone, {
         reply_markup: timezoneKeyboard(user.id),
       });
-    else if (item.draftStep === 'confirm')
+    else if (item.awaiting === 'confirm')
       await ctx.reply(card(item, user.timezone, now()), {
         reply_markup: buttons(item),
       });
@@ -60,13 +70,13 @@ export function registerCapture(
     user: User,
     text: string | null,
   ) {
-    const step = item.draftStep;
+    const step = item.awaiting;
     if (!step) return;
     let data;
     if (step === 'from_whom' || step === 'edit_from_whom')
       data = {
         fromWhom: text?.trim().slice(0, 500) || null,
-        draftStep:
+        awaiting:
           step === 'from_whom'
             ? ('expected_on' as const)
             : ('confirm' as const),
@@ -74,7 +84,7 @@ export function registerCapture(
     else if (step === 'edit_what') {
       if (!text?.trim()) return;
       if (text.trim().length > 500) await ctx.reply(copy.truncated);
-      data = { what: text.trim().slice(0, 500), draftStep: 'confirm' as const };
+      data = { what: text.trim().slice(0, 500), awaiting: 'confirm' as const };
     } else if (step === 'expected_on' || step === 'edit_expected_on') {
       if (!user.timezone) {
         await prompt(ctx, item, user);
@@ -90,7 +100,7 @@ export function registerCapture(
         );
         return;
       }
-      data = { expectedOn: parsed.date, draftStep: 'confirm' as const };
+      data = { expectedOn: parsed.date, awaiting: 'confirm' as const };
     } else {
       await prompt(ctx, item, user);
       return;
@@ -108,6 +118,10 @@ export function registerCapture(
   bot.command('cancel', async (ctx) => {
     if (ctx.chat.type !== 'private') return;
     const user = await users.findOrCreateByTelegramId(BigInt(ctx.from!.id));
+    if (await reminders.clearQuestion(user.id)) {
+      await ctx.reply(copy.cancelled);
+      return;
+    }
     const item = await items.findDraft(user.id);
     await ctx.reply(
       item && (await items.cancel(item.id, user.id))
@@ -152,18 +166,19 @@ export function registerCapture(
           await prompt(ctx, item, user);
           return;
         }
-        if (item.draftStep !== 'confirm') {
+        if (item.awaiting !== 'confirm') {
           response = copy.stale;
           return;
         }
         const result = await items.confirm(item.id, user.id);
-        if (result)
+        if (result) {
+          if (result.reminder) await reminders.enqueue(result.reminder);
           await ctx.editMessageText(
             `${copy.saved}\n${card(result.item, user.timezone, now())}`,
             { reply_markup: new InlineKeyboard() },
           );
-        else response = copy.already;
-      } else if (action === 'ed' && item.draftStep === 'confirm') {
+        } else response = copy.already;
+      } else if (action === 'ed' && item.awaiting === 'confirm') {
         await ctx.editMessageReplyMarkup({
           reply_markup: new InlineKeyboard()
             .text(copy.whatLabel, `ew:${id}`)
@@ -174,28 +189,28 @@ export function registerCapture(
         });
       } else if (
         ['ew', 'ef', 'et'].includes(action!) &&
-        item.draftStep === 'confirm'
+        item.awaiting === 'confirm'
       ) {
-        const draftStep =
+        const awaiting =
           action === 'ew'
             ? 'edit_what'
             : action === 'ef'
               ? 'edit_from_whom'
               : 'edit_expected_on';
         const updated = await items.updateDraft(item.id, user.id, 'confirm', {
-          draftStep,
+          awaiting,
         });
         if (updated) await prompt(ctx, updated, user);
-      } else if (action === 'bk' && item.draftStep === 'confirm') {
+      } else if (action === 'bk' && item.awaiting === 'confirm') {
         await ctx.editMessageReplyMarkup({ reply_markup: buttons(item) });
       } else if (
         action === 'fs' &&
-        ['from_whom', 'edit_from_whom'].includes(item.draftStep!)
+        ['from_whom', 'edit_from_whom'].includes(item.awaiting!)
       )
         await answer(ctx, item, user, null);
       else if (
         /^d[0-3s]$/.test(action!) &&
-        ['expected_on', 'edit_expected_on'].includes(item.draftStep!)
+        ['expected_on', 'edit_expected_on'].includes(item.awaiting!)
       )
         await answer(
           ctx,
@@ -218,6 +233,11 @@ export function registerCapture(
     )
       return;
     const user = await users.findOrCreateByTelegramId(BigInt(ctx.from.id));
+    const question = await reminders.question(user.id);
+    if (question) {
+      await reminders.answer(ctx, question, user, text);
+      return;
+    }
     const draft = await items.findDraft(user.id);
     const zone = resolveTimezone(text);
     if (zone && (!user.timezone || !draft)) {

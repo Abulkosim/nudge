@@ -2,6 +2,7 @@ import { expect, it } from 'vitest';
 import {
   formatDate,
   formatInstant,
+  nextMorning,
   reminderInstant,
   resolveTimezone,
   zones,
@@ -51,6 +52,25 @@ it('falls back to an hour from now once 09:00 has passed', () => {
     ).toISOString(),
   ).toBe('2026-09-19T04:00:00.000Z');
 });
+it.each([
+  ['2026-09-19T10:30:00Z', 'Asia/Tashkent', 1, '2026-09-20T04:00:00.000Z'],
+  ['2026-09-19T10:30:00Z', 'Asia/Tashkent', 3, '2026-09-22T04:00:00.000Z'],
+  ['2026-03-07T20:00:00Z', 'America/New_York', 1, '2026-03-08T13:00:00.000Z'],
+  ['2026-10-31T20:00:00Z', 'America/New_York', 1, '2026-11-01T14:00:00.000Z'],
+  ['2026-03-28T20:00:00Z', 'Europe/Berlin', 1, '2026-03-29T07:00:00.000Z'],
+  ['2026-10-24T20:00:00Z', 'Europe/Berlin', 1, '2026-10-25T08:00:00.000Z'],
+  ['2026-10-23T20:00:00Z', 'Europe/Berlin', 3, '2026-10-26T08:00:00.000Z'],
+])('09:00 from %s in %s, %s days on', (now, zone, days, expected) =>
+  expect(nextMorning(new Date(now), zone, days).toISOString()).toBe(expected),
+);
+it('crosses midnight in the zone, not in UTC', () =>
+  expect(
+    nextMorning(
+      new Date('2026-09-19T20:00:00Z'),
+      'Asia/Tashkent',
+      1,
+    ).toISOString(),
+  ).toBe('2026-09-21T04:00:00.000Z'));
 it('formats calendar dates without host zone shifts and instants with the zone', () => {
   expect(formatDate(new Date('2026-09-19'))).toBe('Sat 19 Sep 2026');
   expect(formatInstant(new Date('2026-09-19T04:00Z'), 'Asia/Tashkent')).toBe(

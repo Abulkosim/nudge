@@ -30,7 +30,7 @@ function harness(timezone: string | null = 'Asia/Tashkent') {
         userId,
         expectedOn: null,
         status: 'draft',
-        draftStep: data.fromWhom ? 'expected_on' : 'from_whom',
+        awaiting: data.fromWhom ? 'expected_on' : 'from_whom',
         createdAt: new Date(),
         updatedAt: new Date(),
         receivedAt: null,
@@ -44,7 +44,7 @@ function harness(timezone: string | null = 'Asia/Tashkent') {
           row.id === id &&
           row.userId === userId &&
           row.status === 'draft' &&
-          row.draftStep === step,
+          row.awaiting === step,
       );
       return item ? Object.assign(item, data) : null;
     },
@@ -54,11 +54,11 @@ function harness(timezone: string | null = 'Asia/Tashkent') {
           row.id === id &&
           row.userId === userId &&
           row.status === 'draft' &&
-          row.draftStep === 'confirm',
+          row.awaiting === 'confirm',
       );
       if (!item || !user.timezone) return null;
       item.status = 'open';
-      item.draftStep = null;
+      item.awaiting = null;
       if (item.expectedOn) reminders++;
       return { item, reminder: null };
     },
@@ -69,9 +69,14 @@ function harness(timezone: string | null = 'Asia/Tashkent') {
       );
       if (!item) return false;
       item.status = 'cancelled';
-      item.draftStep = null;
+      item.awaiting = null;
       return true;
     },
+    receive: async () => null,
+    snooze: async () => null,
+    askSnoozeDate: async () => null,
+    findSnoozeQuestion: async () => null,
+    clearSnoozeQuestion: async () => false,
   };
   const users = {
     findOrCreateByTelegramId: async (id: bigint) =>
@@ -110,7 +115,18 @@ function harness(timezone: string | null = 'Asia/Tashkent') {
     } as never;
   });
   registerStart(bot, users);
-  registerCapture(bot, users, items, () => new Date('2026-09-12T07:00Z'));
+  registerCapture(
+    bot,
+    users,
+    items,
+    {
+      enqueue: async () => 'job',
+      question: async () => null,
+      answer: async () => {},
+      clearQuestion: async () => false,
+    },
+    () => new Date('2026-09-12T07:00Z'),
+  );
   let sequence = 0;
   async function text(
     value: string,
@@ -204,7 +220,7 @@ it('captures, edits and confirms once, acknowledges every tap', async () => {
     what: 'Design v2',
     fromWhom: 'Aziz team',
     status: 'open',
-    draftStep: null,
+    awaiting: null,
   });
   expect(h.reminderCount()).toBe(1);
   expect(
@@ -247,10 +263,10 @@ it('requires timezone before the date and resumes after choosing it', async () =
   expect(h.replies().at(-1)).toContain('or type your city or zone');
   await h.text('Design');
   await h.tap('fs');
-  expect(h.rows[0]?.draftStep).toBe('expected_on');
+  expect(h.rows[0]?.awaiting).toBe('expected_on');
   expect(h.replies().at(-1)).toContain('timezone');
   await h.tap('ds');
-  expect(h.rows[0]?.draftStep).toBe('expected_on');
+  expect(h.rows[0]?.awaiting).toBe('expected_on');
   await h.tap('z0', 456, h.user.id);
   expect(h.user.timezone).toBe('Asia/Tashkent');
   expect(h.replies()).toContain(
@@ -297,18 +313,18 @@ it('keeps invalid dates pending and truncates what while preserving source', asy
   expect(h.rows[0]?.sourceText).toBe(text);
   await h.text(text, undefined, 100);
   expect(h.rows).toHaveLength(1);
-  expect(h.rows[0]?.draftStep).toBe('from_whom');
+  expect(h.rows[0]?.awaiting).toBe('from_whom');
   await h.tap('fs');
   await h.text('nonsense');
   expect(h.replies().at(-1)).toContain('I did not get the date');
   await h.text('11.09');
   expect(h.replies().at(-1)).toContain('That date has passed');
-  expect(h.rows[0]?.draftStep).toBe('expected_on');
+  expect(h.rows[0]?.awaiting).toBe('expected_on');
   await h.tap('ok');
   expect(h.rows[0]?.status).toBe('draft');
   await h.tap('d0');
   await h.tap('fs');
-  expect(h.rows[0]?.draftStep).toBe('confirm');
+  expect(h.rows[0]?.awaiting).toBe('confirm');
 });
 
 it('treats a city as the pending answer once timezone is known', async () => {

@@ -7,6 +7,7 @@ const mock = vi.hoisted(() => ({
   snapshot: {
     status: 'loading' as 'loading' | 'ready' | 'error',
     initData: '',
+    colourScheme: 'light' as 'light' | 'dark',
   },
   listener: () => {},
   ready: vi.fn(),
@@ -22,7 +23,7 @@ vi.mock('@/telegram', () => ({
   },
 }));
 beforeEach(() => {
-  mock.snapshot = { status: 'loading', initData: '' };
+  mock.snapshot = { status: 'loading', initData: '', colourScheme: 'light' };
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -76,17 +77,33 @@ function stubFetch(
   return fetchMock;
 }
 const signedIn = () => {
-  mock.snapshot = { status: 'ready', initData: 'signed-data' };
+  mock.snapshot = {
+    status: 'ready',
+    initData: 'signed-data',
+    colourScheme: 'light',
+  };
 };
 const bodyOf = (call: [unknown, RequestInit]) =>
   JSON.parse(String(call[1].body)) as unknown;
+// Radix listens for pointer events the jsdom click alone does not send.
+const press = (element: Element) => {
+  fireEvent.pointerDown(
+    element,
+    new MouseEvent('pointerdown', { bubbles: true }),
+  );
+  fireEvent.click(element);
+};
+const openDetail = async (name: RegExp) => {
+  fireEvent.click(await screen.findByRole('button', { name }));
+  return await screen.findByRole('dialog');
+};
 
 it('shows loading, then the placeholder when Telegram is ready', () => {
   render(<App />);
   expect(screen.getByRole('status')).toHaveTextContent('Loading...');
   expect(screen.queryByRole('heading')).not.toBeInTheDocument();
   act(() => {
-    mock.snapshot = { status: 'ready', initData: '' };
+    mock.snapshot = { status: 'ready', initData: '', colourScheme: 'light' };
     mock.listener();
   });
   expect(
@@ -95,7 +112,7 @@ it('shows loading, then the placeholder when Telegram is ready', () => {
   expect(mock.ready).toHaveBeenCalledOnce();
 });
 it('shows a plain failure state', () => {
-  mock.snapshot = { status: 'error', initData: '' };
+  mock.snapshot = { status: 'error', initData: '', colourScheme: 'light' };
   render(<App />);
   expect(screen.getByRole('alert')).toHaveTextContent('Could not open Nudge.');
   expect(mock.ready).toHaveBeenCalledOnce();
@@ -115,11 +132,30 @@ it('fetches me once and lists what the user is waiting on, including StrictMode'
     </StrictMode>,
   );
   const row = await screen.findByRole('button', { name: /Design/ });
-  expect(row).toHaveTextContent('from Aziz, Sat 19 Sep');
+  expect(row).toHaveTextContent('from Aziz · Sat 19 Sep');
   expect(row).toHaveTextContent('Reminds Sat 19 Sep, 09:00');
+  expect(
+    screen.getByRole('tab', { name: /^Waiting on\s*1$/ }),
+  ).toBeInTheDocument();
   expect(
     fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/api/me')),
   ).toHaveLength(1);
+});
+
+it('shows skeleton rows while the list loads', async () => {
+  signedIn();
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((input: unknown) =>
+      String(input).endsWith('/api/me')
+        ? Promise.resolve(Response.json(me))
+        : new Promise<Response>(() => {}),
+    ),
+  );
+  render(<App />);
+  await screen.findByRole('tab', { name: /^Waiting on$/ });
+  expect(screen.getByRole('status')).toHaveTextContent('Loading...');
+  expect(screen.queryByRole('tab', { name: /Waiting on\s*\d/ })).toBeNull();
 });
 
 it('marks a date in the past as overdue', async () => {
@@ -153,7 +189,7 @@ it('asks for received items when that tab is chosen', async () => {
     return undefined;
   });
   render(<App />);
-  fireEvent.mouseDown(await screen.findByRole('tab', { name: 'Received' }));
+  fireEvent.mouseDown(await screen.findByRole('tab', { name: /Received/ }));
   const row = await screen.findByRole('button', { name: /Keys/ });
   expect(row).toHaveTextContent('Received Sun 20 Sep');
   expect(sessionStorage.getItem('nudge.tab')).toBe('received');
@@ -164,7 +200,7 @@ it('asks for received items when that tab is chosen', async () => {
   ).toBe(true);
 });
 
-it('saves only the fields that changed and returns to the list', async () => {
+it('opens the item in a drawer and saves only the fields that changed', async () => {
   signedIn();
   const fetchMock = stubFetch((url, init) => {
     if (url.endsWith('/api/me')) return Response.json(me);
@@ -174,16 +210,23 @@ it('saves only the fields that changed and returns to the list', async () => {
     return undefined;
   });
   render(<App />);
-  fireEvent.click(await screen.findByRole('button', { name: /Design/ }));
-  expect(screen.getByLabelText('Reminder')).toHaveValue('2026-09-19T09:00');
+  const drawer = await openDetail(/Design/);
+  expect(within(drawer).getByRole('heading')).toHaveTextContent('Design');
+  expect(
+    within(drawer).getByRole('button', { name: /Expected/ }),
+  ).toHaveTextContent('Sat 19 Sep 2026');
+  expect(within(drawer).getByRole('switch')).toBeChecked();
+  expect(
+    within(drawer).getByRole('combobox', { name: /Reminder time/ }),
+  ).toHaveTextContent('09:00');
   expect(screen.getByText('Times in Asia/Tashkent')).toBeInTheDocument();
-  const save = screen.getByRole('button', { name: 'Save' });
+  const save = within(drawer).getByRole('button', { name: 'Save' });
   expect(save).toBeDisabled();
-  fireEvent.change(screen.getByLabelText('What'), {
+  fireEvent.change(within(drawer).getByLabelText('What'), {
     target: { value: 'Final design' },
   });
   fireEvent.click(save);
-  expect(await screen.findByRole('tab', { name: 'Waiting on' })).toBeVisible();
+  expect(await screen.findAllByText('Saved')).not.toHaveLength(0);
   const patch = fetchMock.mock.calls.find(
     ([, init]) => init?.method === 'PATCH',
   );
@@ -193,7 +236,79 @@ it('saves only the fields that changed and returns to the list', async () => {
   });
 });
 
-it('marks an item received from the detail screen', async () => {
+it('clears the reminder when the switch goes off', async () => {
+  signedIn();
+  const fetchMock = stubFetch((url, init) => {
+    if (url.endsWith('/api/me')) return Response.json(me);
+    if (url.endsWith('/api/items?status=open'))
+      return Response.json({ items: [design] });
+    if (init.method === 'PATCH') return Response.json(design);
+    return undefined;
+  });
+  render(<App />);
+  const drawer = await openDetail(/Design/);
+  fireEvent.click(within(drawer).getByRole('switch'));
+  expect(screen.queryByRole('combobox', { name: /Reminder time/ })).toBeNull();
+  fireEvent.click(within(drawer).getByRole('button', { name: 'Save' }));
+  await screen.findAllByText('Saved');
+  const patch = fetchMock.mock.calls.find(
+    ([, init]) => init?.method === 'PATCH',
+  );
+  expect(bodyOf(patch as [unknown, RequestInit])).toEqual({ remindAt: null });
+});
+
+it('turns a reminder on at 09:00 on the expected date', async () => {
+  signedIn();
+  const fetchMock = stubFetch((url, init) => {
+    if (url.endsWith('/api/me')) return Response.json(me);
+    if (url.endsWith('/api/items?status=open'))
+      return Response.json({ items: [{ ...design, remindAt: null }] });
+    if (init.method === 'PATCH') return Response.json(design);
+    return undefined;
+  });
+  render(<App />);
+  const drawer = await openDetail(/Design/);
+  const remind = within(drawer).getByRole('switch');
+  expect(remind).not.toBeChecked();
+  fireEvent.click(remind);
+  expect(
+    within(drawer).getByRole('combobox', { name: /Reminder time/ }),
+  ).toHaveTextContent('09:00');
+  fireEvent.click(within(drawer).getByRole('button', { name: 'Save' }));
+  await screen.findAllByText('Saved');
+  const patch = fetchMock.mock.calls.find(
+    ([, init]) => init?.method === 'PATCH',
+  );
+  // 09:00 in Asia/Tashkent, which is UTC+5.
+  expect(bodyOf(patch as [unknown, RequestInit])).toEqual({
+    remindAt: '2026-09-19T04:00:00.000Z',
+  });
+});
+
+it('moves the reminder when another time is picked', async () => {
+  signedIn();
+  const fetchMock = stubFetch((url, init) => {
+    if (url.endsWith('/api/me')) return Response.json(me);
+    if (url.endsWith('/api/items?status=open'))
+      return Response.json({ items: [design] });
+    if (init.method === 'PATCH') return Response.json(design);
+    return undefined;
+  });
+  render(<App />);
+  const drawer = await openDetail(/Design/);
+  press(within(drawer).getByRole('combobox', { name: /Reminder time/ }));
+  press(await screen.findByRole('option', { name: '10:30' }));
+  fireEvent.click(within(drawer).getByRole('button', { name: 'Save' }));
+  await screen.findAllByText('Saved');
+  const patch = fetchMock.mock.calls.find(
+    ([, init]) => init?.method === 'PATCH',
+  );
+  expect(bodyOf(patch as [unknown, RequestInit])).toEqual({
+    remindAt: '2026-09-19T05:30:00.000Z',
+  });
+});
+
+it('marks an item received, closes the drawer and says so', async () => {
   signedIn();
   const fetchMock = stubFetch((url, init) => {
     if (url.endsWith('/api/me')) return Response.json(me);
@@ -204,9 +319,10 @@ it('marks an item received from the detail screen', async () => {
     return undefined;
   });
   render(<App />);
-  fireEvent.click(await screen.findByRole('button', { name: /Design/ }));
-  fireEvent.click(screen.getByRole('button', { name: 'Received' }));
-  expect(await screen.findByRole('tab', { name: 'Waiting on' })).toBeVisible();
+  const drawer = await openDetail(/Design/);
+  fireEvent.click(within(drawer).getByRole('button', { name: /Received/ }));
+  expect(await screen.findAllByText('Marked received')).not.toHaveLength(0);
+  expect(screen.queryByRole('dialog')).toBeNull();
   expect(
     fetchMock.mock.calls.some(
       ([url, init]) =>
@@ -289,7 +405,7 @@ it('shows a plain auth error without reflecting server text', async () => {
   );
 });
 it('does not fetch in the browser mock', () => {
-  mock.snapshot = { status: 'ready', initData: '' };
+  mock.snapshot = { status: 'ready', initData: '', colourScheme: 'light' };
   const fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
   render(<App />);

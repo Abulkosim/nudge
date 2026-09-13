@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { UserDto, type ItemSummaryDto } from '@nudge/shared';
+import { UserDto } from '@nudge/shared';
 import { apiFetch } from '@/api/client';
 import type { ListStatus } from '@/api/items';
 import { telegram } from '@/telegram';
 import { Card, CardContent } from '@/components/ui/card';
+import { Toaster } from '@/components/ui/sonner';
 import { copy } from '@/copy';
-import { Detail } from '@/screens/Detail';
 import { List } from '@/screens/List';
 
 // The URL hash belongs to Telegram's launch data, so the tab is remembered per session instead.
@@ -26,7 +26,7 @@ function rememberTab(tab: ListStatus) {
 }
 
 export function App() {
-  const { status, initData } = useSyncExternalStore(
+  const { status, initData, colourScheme } = useSyncExternalStore(
     telegram.subscribe,
     telegram.getSnapshot,
   );
@@ -63,29 +63,24 @@ export function App() {
   }, [status, initData]);
 
   const [tab, setTab] = useState<ListStatus>(rememberedTab);
-  const [detail, setDetail] = useState<ItemSummaryDto | null>(null);
   const user = auth?.initData === initData ? auth.user : null;
 
   if (user) {
     return (
-      <main className="app-frame mx-auto flex max-w-lg flex-col gap-6">
+      <main className="app-frame mx-auto flex max-w-lg flex-col gap-4">
         <header className="text-lg font-semibold tracking-tight">
           {copy.title}
         </header>
-        {detail ? (
-          <Detail item={detail} user={user} onClose={() => setDetail(null)} />
-        ) : (
-          <List
-            user={user}
-            onUser={(next) => setAuth({ initData, user: next })}
-            tab={tab}
-            onTab={(next) => {
-              setTab(next);
-              rememberTab(next);
-            }}
-            onOpen={setDetail}
-          />
-        )}
+        <List
+          user={user}
+          onUser={(next) => setAuth({ initData, user: next })}
+          tab={tab}
+          onTab={(next) => {
+            setTab(next);
+            rememberTab(next);
+          }}
+        />
+        <Toaster position="top-center" theme={colourScheme} />
       </main>
     );
   }

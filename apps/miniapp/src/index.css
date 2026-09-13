@@ -53,6 +53,14 @@
   }
 }
 
+/* The drawer sits on the screen edge, so its footer keeps clear of the home indicator. */
+.drawer-safe {
+  padding-bottom: calc(
+    1rem + max(env(safe-area-inset-bottom, 0px), var(--safe-bottom, 0px)) +
+      var(--content-safe-bottom, 0px)
+  );
+}
+
 .app-frame {
   min-height: 100svh;
   padding-top: calc(

@@ -2,11 +2,27 @@ import { TZDate } from '@date-fns/tz';
 import { format } from 'date-fns';
 
 const day = 'EEE d MMM';
+const dayAndYear = 'EEE d MMM yyyy';
 const wallClock = "yyyy-MM-dd'T'HH:mm";
 
 // A plain calendar date carries no zone, so it is read in UTC and never shifted.
 export function formatDate(date: string): string {
   return format(new TZDate(new Date(date), 'UTC'), day);
+}
+export function formatDateLong(date: string): string {
+  return format(new TZDate(new Date(date), 'UTC'), dayAndYear);
+}
+// The calendar picker thinks in host-zone days, so a plain date becomes a local midnight
+// and comes back through its local parts. Never through toISOString, which would shift it.
+export function toCalendarDate(date: string): Date {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!parts) return new Date(NaN);
+  const [, year, month, dayOfMonth] = parts;
+  return new Date(Number(year), Number(month) - 1, Number(dayOfMonth));
+}
+export function fromCalendarDate(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 export function formatInstantDate(instant: string, zone: string): string {
   return format(new TZDate(new Date(instant), zone), day);
@@ -20,7 +36,7 @@ export function today(zone: string, now = new Date()): string {
 export function deviceZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
-// What a datetime-local field shows: the instant as the user's own wall clock.
+// The instant as the user's own wall clock, the form the reminder pickers work in.
 export function toWallClock(instant: string, zone: string): string {
   return format(new TZDate(new Date(instant), zone), wallClock);
 }

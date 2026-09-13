@@ -49,15 +49,10 @@ export function TimezoneBanner({
     setHidden(true);
   };
   return (
-    <section className="flex flex-col gap-2 rounded-xl bg-muted p-3 text-sm">
-      <p>
+    <section className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl bg-muted px-3 py-2 text-sm">
+      <p className="min-w-0">
         {user.timezone ? copy.deviceTimezone(device) : copy.askTimezone(device)}
       </p>
-      {error ? (
-        <p role="alert" className="text-destructive">
-          {error}
-        </p>
-      ) : null}
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={use} disabled={busy}>
           {copy.useTimezone(device)}
@@ -68,6 +63,11 @@ export function TimezoneBanner({
           </Button>
         ) : null}
       </div>
+      {error ? (
+        <p role="alert" className="w-full text-destructive">
+          {error}
+        </p>
+      ) : null}
     </section>
   );
 }

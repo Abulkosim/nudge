@@ -12,5 +12,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     clearMocks: true,
+    // Tests run the browser mock unauthenticated, whatever a local .env.local holds.
+    env: { VITE_DEV_INIT_DATA: '' },
   },
 });

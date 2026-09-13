@@ -95,7 +95,12 @@ async function start() {
     'Pending reminders queued',
   );
   checkpoint();
-  const { app, miniappMounted } = createApp(config, bot, users, logger);
+  const { app, miniappMounted } = createApp(config, bot, {
+    users,
+    items,
+    scheduler,
+    logger,
+  });
   if (config.NODE_ENV === 'production' && !miniappMounted) {
     logger.warn('Mini App build missing. /app is unavailable.');
   }

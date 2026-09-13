@@ -73,6 +73,10 @@ function harness(timezone: string | null = 'Asia/Tashkent') {
       return true;
     },
     receive: async () => null,
+    summary: async () => null,
+    list: async () => [],
+    update: async () => ({ ok: false, reason: 'not_found' }),
+    reopen: async () => ({ ok: false, reason: 'not_found' }),
     snooze: async () => null,
     askSnoozeDate: async () => null,
     findSnoozeQuestion: async () => null,

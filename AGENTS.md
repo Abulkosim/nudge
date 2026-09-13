@@ -22,6 +22,7 @@ Compose for local work, GitHub Actions for CI, Railway for hosting. One reposito
 - `pnpm build`: build shared, the server and the Mini App.
 - `pnpm --filter @nudge/server db:migrate`: create and apply local migrations.
 - `pnpm --filter @nudge/server dev:init-data <telegram-id>`: sign local Telegram auth and print a curl command.
+- Paste that command's first output line into `apps/miniapp/.env.local` as `VITE_DEV_INIT_DATA=...` to open the Mini App at `http://localhost:5173/app/` without Telegram.
 - `docker compose up -d`: start local Postgres.
 - Pushing to `main` deploys to Railway once CI passes. Setup and variables: `docs/deploy.md`.
 

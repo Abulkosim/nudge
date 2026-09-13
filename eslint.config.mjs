@@ -36,6 +36,11 @@ export default [
     },
   },
   {
+    files: ['apps/miniapp/src/components/ui/**/*.tsx'],
+    // Generated shadcn components keep their variant helpers beside the component.
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
+  {
     files: ['apps/miniapp/src/telegram/**/*.{ts,tsx}'],
     // The adapter is the only boundary allowed to import the Telegram SDK.
     rules: { 'no-restricted-imports': 'off' },

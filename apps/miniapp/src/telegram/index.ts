@@ -28,6 +28,14 @@ let notified = false;
 let generation = 0;
 const disposers: (() => void)[] = [];
 
+// Development only: a signed initData from dev:init-data opens the app in a plain browser.
+function devInitData(): string {
+  const raw: unknown = import.meta.env.DEV
+    ? import.meta.env.VITE_DEV_INIT_DATA
+    : undefined;
+  return typeof raw === 'string' ? raw : '';
+}
+
 function update(next: TelegramSnapshot) {
   snapshot = next;
   for (const listener of listeners) listener();
@@ -66,7 +74,7 @@ async function initialize(currentGeneration: number) {
       sync();
       preference.addEventListener('change', sync);
       disposers.push(() => preference.removeEventListener('change', sync));
-      update({ ...snapshot, status: 'ready', initData: '' });
+      update({ ...snapshot, status: 'ready', initData: devInitData() });
       return;
     }
     disposers.push(initSdk());

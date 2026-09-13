@@ -1,8 +1,29 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { UserDto } from '@nudge/shared';
+import { UserDto, type ItemSummaryDto } from '@nudge/shared';
 import { apiFetch } from '@/api/client';
+import type { ListStatus } from '@/api/items';
 import { telegram } from '@/telegram';
 import { Card, CardContent } from '@/components/ui/card';
+import { copy } from '@/copy';
+import { Detail } from '@/screens/Detail';
+import { List } from '@/screens/List';
+
+// The URL hash belongs to Telegram's launch data, so the tab is remembered per session instead.
+const tabKey = 'nudge.tab';
+function rememberedTab(): ListStatus {
+  try {
+    return sessionStorage.getItem(tabKey) === 'received' ? 'received' : 'open';
+  } catch {
+    return 'open';
+  }
+}
+function rememberTab(tab: ListStatus) {
+  try {
+    sessionStorage.setItem(tabKey, tab);
+  } catch {
+    // Storage can be unavailable. The tab still switches for this render.
+  }
+}
 
 export function App() {
   const { status, initData } = useSyncExternalStore(
@@ -17,9 +38,10 @@ export function App() {
     initData: string;
     promise: Promise<UserDto>;
   } | null>(null);
-  const [auth, setAuth] = useState<{ initData: string; ok: boolean } | null>(
-    null,
-  );
+  const [auth, setAuth] = useState<{
+    initData: string;
+    user: UserDto | null;
+  } | null>(null);
   useEffect(() => {
     if (status !== 'ready' || !initData) return;
     // Reuse the request across StrictMode's effect replay and theme updates.
@@ -28,11 +50,11 @@ export function App() {
     }
     let active = true;
     void request.current.promise.then(
-      () => {
-        if (active) setAuth({ initData, ok: true });
+      (user) => {
+        if (active) setAuth({ initData, user });
       },
       () => {
-        if (active) setAuth({ initData, ok: false });
+        if (active) setAuth({ initData, user: null });
       },
     );
     return () => {
@@ -40,26 +62,53 @@ export function App() {
     };
   }, [status, initData]);
 
+  const [tab, setTab] = useState<ListStatus>(rememberedTab);
+  const [detail, setDetail] = useState<ItemSummaryDto | null>(null);
+  const user = auth?.initData === initData ? auth.user : null;
+
+  if (user) {
+    return (
+      <main className="app-frame mx-auto flex max-w-lg flex-col gap-6">
+        <header className="text-lg font-semibold tracking-tight">
+          {copy.title}
+        </header>
+        {detail ? (
+          <Detail item={detail} user={user} onClose={() => setDetail(null)} />
+        ) : (
+          <List
+            user={user}
+            onUser={(next) => setAuth({ initData, user: next })}
+            tab={tab}
+            onTab={(next) => {
+              setTab(next);
+              rememberTab(next);
+            }}
+            onOpen={setDetail}
+          />
+        )}
+      </main>
+    );
+  }
   return (
     <main className="app-frame mx-auto flex max-w-lg flex-col gap-8">
-      <header className="text-lg font-semibold tracking-tight">Nudge</header>
+      <header className="text-lg font-semibold tracking-tight">
+        {copy.title}
+      </header>
       <Card>
         <CardContent>
           {status === 'loading' ? (
             <p role="status" className="text-sm text-muted-foreground">
-              Loading...
+              {copy.loading}
             </p>
           ) : status === 'error' ? (
             <p role="alert" className="text-sm">
-              Could not open Nudge. Close and try again.
+              {copy.openFailed}
             </p>
           ) : initData ? (
             auth?.initData !== initData ? (
-              <p role="status">Signing in...</p>
-            ) : auth.ok ? (
-              <p role="status">Signed in.</p>
+              <p role="status">{copy.signingIn}</p>
             ) : (
-              <p role="alert">Could not sign in. Close and try again.</p>
+              <p role="alert">{copy.signInFailed}</p>
             )
           ) : (
             <section aria-labelledby="coming-title" className="space-y-2">
@@ -67,11 +116,9 @@ export function App() {
                 id="coming-title"
                 className="text-xl font-semibold tracking-tight"
               >
-                Mini App coming soon.
+                {copy.comingSoon}
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Use the bot for now.
-              </p>
+              <p className="text-sm text-muted-foreground">{copy.useTheBot}</p>
             </section>
           )}
         </CardContent>

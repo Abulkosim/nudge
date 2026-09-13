@@ -1,7 +1,7 @@
 import { once } from 'node:events';
 import { Bot } from 'grammy';
 import { expect, it } from 'vitest';
-import { fakeUsers, silentLogger } from './test-helpers.js';
+import { fakeDeps } from './test-helpers.js';
 import { createApp } from './app.js';
 import { parseConfig } from './config-schema.js';
 
@@ -37,10 +37,7 @@ it('serves health and checks the webhook secret before handling an update', asyn
   bot.use(() => {
     handled++;
   });
-  const server = createApp(config, bot, fakeUsers(), silentLogger).app.listen(
-    0,
-    '127.0.0.1',
-  );
+  const server = createApp(config, bot, fakeDeps()).app.listen(0, '127.0.0.1');
   try {
     await once(server, 'listening');
     const address = server.address();

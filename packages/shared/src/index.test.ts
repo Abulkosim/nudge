@@ -1,5 +1,13 @@
 import { expect, it } from 'vitest';
-import { ApiError, ItemDto, ItemStatus, UserDto } from './index.js';
+import {
+  ApiError,
+  ItemListDto,
+  ItemStatus,
+  ItemSummaryDto,
+  UpdateItemBody,
+  UpdateMeBody,
+  UserDto,
+} from './index.js';
 
 it('round-trips scalar DTOs through JSON', () => {
   const user: UserDto = {
@@ -8,22 +16,19 @@ it('round-trips scalar DTOs through JSON', () => {
     timezone: null,
     createdAt: '2026-09-12T00:00:00.000Z',
   };
-  const item: ItemDto = {
+  const item: ItemSummaryDto = {
     id: user.id,
-    userId: user.id,
     what: 'Approval',
     fromWhom: null,
-    expectedOn: null,
+    expectedOn: '2026-09-19',
     status: 'open',
-    sourceChatId: '-1001234567890',
-    sourceMessageId: '123',
-    sourceText: null,
     createdAt: user.createdAt,
-    updatedAt: user.createdAt,
     receivedAt: null,
+    remindAt: '2026-09-19T04:00:00.000Z',
   };
   expect(UserDto.parse(JSON.parse(JSON.stringify(user)))).toEqual(user);
-  expect(ItemDto.parse(JSON.parse(JSON.stringify(item)))).toEqual(item);
+  expect(ItemSummaryDto.parse(JSON.parse(JSON.stringify(item)))).toEqual(item);
+  expect(ItemListDto.parse({ items: [item] })).toEqual({ items: [item] });
   expect(ItemStatus.options).toEqual([
     'draft',
     'open',
@@ -31,14 +36,48 @@ it('round-trips scalar DTOs through JSON', () => {
     'cancelled',
   ]);
   const error: ApiError = {
-    error: { code: 'unauthorized', message: 'Sign in.' },
+    error: { code: 'conflict', message: 'Item is not open.' },
   };
   expect(ApiError.parse(JSON.parse(JSON.stringify(error)))).toEqual(error);
   expect(
     ApiError.safeParse({ error: { code: 'unknown', message: 'No.' } }).success,
   ).toBe(false);
   expect(UserDto.safeParse({ ...user, telegramId: 123 }).success).toBe(false);
-  expect(ItemDto.safeParse({ ...item, expectedOn: 'tomorrow' }).success).toBe(
-    false,
+  expect(
+    ItemSummaryDto.safeParse({ ...item, expectedOn: 'tomorrow' }).success,
+  ).toBe(false);
+  expect(ItemSummaryDto.safeParse({ ...item, userId: user.id }).success).toBe(
+    true,
   );
+});
+
+it('accepts partial item edits and rejects unknown or oversized fields', () => {
+  expect(UpdateItemBody.parse({})).toEqual({});
+  expect(
+    UpdateItemBody.parse({
+      what: '  Design  ',
+      fromWhom: null,
+      expectedOn: null,
+      remindAt: '2026-09-19T04:00:00.000Z',
+    }),
+  ).toEqual({
+    what: 'Design',
+    fromWhom: null,
+    expectedOn: null,
+    remindAt: '2026-09-19T04:00:00.000Z',
+  });
+  for (const invalid of [
+    { what: '   ' },
+    { what: 'x'.repeat(501) },
+    { fromWhom: 'x'.repeat(501) },
+    { expectedOn: '2026-09-19T04:00:00.000Z' },
+    { remindAt: '2026-09-19' },
+    { status: 'received' },
+  ]) {
+    expect(UpdateItemBody.safeParse(invalid).success).toBe(false);
+  }
+  expect(UpdateMeBody.parse({ timezone: ' Asia/Tashkent ' })).toEqual({
+    timezone: 'Asia/Tashkent',
+  });
+  expect(UpdateMeBody.safeParse({ timezone: '' }).success).toBe(false);
 });

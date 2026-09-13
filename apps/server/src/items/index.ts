@@ -13,10 +13,34 @@ type DraftInput = Pick<
 type DraftChanges = Partial<
   Pick<Item, 'what' | 'fromWhom' | 'expectedOn' | 'awaiting'>
 >;
+// A key that is absent means "leave it alone", a null value means "clear it".
+export interface ItemChanges {
+  what?: string | undefined;
+  fromWhom?: string | null | undefined;
+  expectedOn?: Date | null | undefined;
+  remindAt?: Date | null | undefined;
+}
+export type ItemWithReminder = Item & { reminders: Reminder[] };
+export type EditOutcome =
+  | {
+      ok: true;
+      item: ItemWithReminder;
+      reminder: Reminder | null;
+      jobIds: string[];
+    }
+  | { ok: false; reason: 'not_found' | 'not_open' | 'no_timezone' | 'past' };
 const jobIdsOf = (reminders: Pick<Reminder, 'jobId'>[]) =>
   reminders
     .map((reminder) => reminder.jobId)
     .filter((jobId): jobId is string => jobId !== null);
+// The single pending reminder the Mini App shows, earliest first if a row ever slipped past.
+const withReminder = {
+  reminders: {
+    where: { status: 'pending' } as const,
+    orderBy: { scheduledFor: 'asc' } as const,
+    take: 1,
+  },
+};
 export function createItemsService(
   prisma: PrismaClient,
   now = () => new Date(),
@@ -27,6 +51,132 @@ export function createItemsService(
     },
     async find(itemId: string, userId: string): Promise<Item | null> {
       return prisma.item.findFirst({ where: { id: itemId, userId } });
+    },
+    async summary(
+      itemId: string,
+      userId: string,
+    ): Promise<ItemWithReminder | null> {
+      return prisma.item.findFirst({
+        where: { id: itemId, userId },
+        include: withReminder,
+      });
+    },
+    async list(
+      userId: string,
+      status: 'open' | 'received',
+    ): Promise<ItemWithReminder[]> {
+      return prisma.item.findMany({
+        where: { userId, status },
+        include: withReminder,
+        orderBy:
+          status === 'open'
+            ? [
+                { expectedOn: { sort: 'asc', nulls: 'last' } },
+                { createdAt: 'asc' },
+              ]
+            : [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
+      });
+    },
+    // One transaction per edit: the row, its pending reminders and the replacement.
+    async update(
+      itemId: string,
+      userId: string,
+      changes: ItemChanges,
+    ): Promise<EditOutcome> {
+      return prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "Item" WHERE "id" = ${itemId} FOR UPDATE`;
+        const item = await tx.item.findFirst({ where: { id: itemId, userId } });
+        if (!item) return { ok: false, reason: 'not_found' };
+        if (item.status !== 'open') return { ok: false, reason: 'not_open' };
+        const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+        let next: Date | null | undefined;
+        if (changes.remindAt !== undefined) {
+          if (changes.remindAt && changes.remindAt.getTime() <= now().getTime())
+            return { ok: false, reason: 'past' };
+          next = changes.remindAt;
+        } else if (changes.expectedOn !== undefined) {
+          if (changes.expectedOn === null) next = null;
+          else if (
+            item.expectedOn?.getTime() !== changes.expectedOn.getTime()
+          ) {
+            if (!user.timezone) return { ok: false, reason: 'no_timezone' };
+            next = reminderInstant(changes.expectedOn, user.timezone, now());
+          }
+        }
+        await tx.item.update({
+          where: { id: itemId },
+          data: {
+            ...(changes.what === undefined ? {} : { what: changes.what }),
+            ...(changes.fromWhom === undefined
+              ? {}
+              : { fromWhom: changes.fromWhom }),
+            ...(changes.expectedOn === undefined
+              ? {}
+              : { expectedOn: changes.expectedOn }),
+          },
+        });
+        let reminder: Reminder | null = null;
+        let jobIds: string[] = [];
+        if (next !== undefined) {
+          const pending = await tx.reminder.findMany({
+            where: { itemId, status: 'pending' },
+          });
+          // A resent save with the same instant keeps the reminder it already has.
+          const same = pending.find(
+            (row) =>
+              row.kind === 'scheduled' &&
+              row.scheduledFor.getTime() === next?.getTime(),
+          );
+          if (same) reminder = same;
+          else {
+            await tx.reminder.updateMany({
+              where: { itemId, status: 'pending' },
+              data: { status: 'cancelled' },
+            });
+            jobIds = jobIdsOf(pending);
+            if (next)
+              reminder = await tx.reminder.create({
+                data: {
+                  itemId,
+                  scheduledFor: next,
+                  kind: 'scheduled',
+                  status: 'pending',
+                  jobId: null,
+                },
+              });
+          }
+        }
+        return {
+          ok: true,
+          reminder,
+          jobIds,
+          item: await tx.item.findUniqueOrThrow({
+            where: { id: itemId },
+            include: withReminder,
+          }),
+        };
+      });
+    },
+    async reopen(itemId: string, userId: string): Promise<EditOutcome> {
+      return prisma.$transaction(async (tx) => {
+        const item = await tx.item.findFirst({ where: { id: itemId, userId } });
+        if (!item) return { ok: false, reason: 'not_found' };
+        if (item.status !== 'open' && item.status !== 'received')
+          return { ok: false, reason: 'not_open' };
+        await tx.item.updateMany({
+          where: { id: itemId, userId, status: 'received' },
+          data: { status: 'open', receivedAt: null },
+        });
+        return {
+          ok: true,
+          reminder: null,
+          jobIds: [],
+          item: await tx.item.findUniqueOrThrow({
+            where: { id: itemId },
+            include: withReminder,
+          }),
+        };
+      });
     },
     async createDraft(userId: string, data: DraftInput) {
       // Serialize capture per user, including replay after confirmation or cancellation.
@@ -119,7 +269,10 @@ export function createItemsService(
           where: { itemId, status: 'pending' },
           data: { status: 'cancelled' },
         });
-        const item = await tx.item.findUniqueOrThrow({ where: { id: itemId } });
+        const item = await tx.item.findUniqueOrThrow({
+          where: { id: itemId },
+          include: withReminder,
+        });
         return { item, jobIds: jobIdsOf(pending) };
       });
     },

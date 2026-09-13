@@ -1,4 +1,5 @@
 import { createHmac } from 'node:crypto';
+import type { ApiDeps } from './api.js';
 import type { UsersService } from './users/index.js';
 
 export const testToken = '123:test-token';
@@ -13,6 +14,25 @@ export function fakeUsers(): UsersService {
   return {
     findOrCreateByTelegramId: async () => testUser,
     setTimezone: async (_id, timezone) => ({ ...testUser, timezone }),
+  };
+}
+
+const unreachable = () => {
+  throw new Error('Not part of this test.');
+};
+export function fakeDeps(overrides: Partial<ApiDeps> = {}): ApiDeps {
+  return {
+    users: fakeUsers(),
+    items: {
+      list: unreachable,
+      summary: unreachable,
+      update: unreachable,
+      receive: unreachable,
+      reopen: unreachable,
+    },
+    scheduler: { enqueue: unreachable, cancelJobs: unreachable },
+    logger: silentLogger,
+    ...overrides,
   };
 }
 
